@@ -103,6 +103,34 @@ export interface PatientFile {
   created_at: string
 }
 
+export type ClinicRole = 'owner' | 'member'
+
+export interface Clinic {
+  id: string
+  name: string
+  created_at: string
+}
+
+export interface ClinicMember {
+  clinic_id: string
+  user_id: string
+  role: ClinicRole
+  /** Copia do e-mail em auth.users, mantida por trigger. */
+  email: string | null
+  created_at: string
+}
+
+export interface ClinicInvite {
+  id: string
+  clinic_id: string
+  email: string
+  role: ClinicRole
+  created_by: string | null
+  created_at: string
+  expires_at: string
+  accepted_at: string | null
+}
+
 type Table<Row> = {
   Row: Row & Record<string, unknown>
   Insert: Partial<Row> & Record<string, unknown>
@@ -124,6 +152,9 @@ export interface Database {
       questionnaire_responses: Table<QuestionnaireResponse>
       appointments: Table<Appointment>
       files: Table<PatientFile>
+      clinics: Table<Clinic>
+      clinic_members: Table<ClinicMember>
+      clinic_invites: Table<ClinicInvite>
     }
     Views: Record<string, never>
     Functions: Record<string, never>

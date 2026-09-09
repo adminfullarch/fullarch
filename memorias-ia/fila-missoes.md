@@ -85,3 +85,49 @@ Formato de cada entrada:
 - Proxima acao: nenhuma. Ficou registrado que politicas de `storage.objects`
   precisam de migration separada das politicas de tabelas, sob pena de deadlock
   com o servico de storage.
+
+## MISS-2026-09-09-004 — Convite de colegas para a mesma clinica
+
+- Criada por: Claude Code, a pedido do usuario
+- Responsavel: Claude Code
+- Status: concluida (falta apenas a rota, ver MISS-005)
+- Data: 2026-09-09
+- Objetivo: permitir que uma clinica tenha mais de uma pessoa. Antes disso,
+  cada cadastro novo virava uma clinica separada, mesmo sendo a mesma equipe.
+- Mecanismo escolhido: **e-mail pre-autorizado**, nao link com token. O dono
+  libera o endereco; quem se cadastrar com ele entra na clinica que convidou.
+  Dispensa SMTP, Edge Function, token e tela de aceite, e reaproveita o trigger
+  de cadastro ja existente. Avisar a pessoa e por fora.
+- Arquivos: `supabase/migrations/0009_convite_de_colegas.sql`,
+  `src/api/team.ts`, `src/components/AjustesView.tsx`,
+  `src/types/database.types.ts`.
+- Resultado: **validado no banco real**, em transacao desfeita por excecao.
+  Convidado entrou na clinica existente com papel `member`, enxergando os
+  2 pacientes dela; convite marcado como aceito; quem se cadastrou sem convite
+  caiu em clinica separada; total de clinicas subiu de 1 para 2, so a do
+  estranho. O casamento de e-mail ignora maiusculas (convite gravado como
+  `Colega@Exemplo.Invalido`, cadastro feito com `colega@exemplo.invalido`).
+  `npm run build` aprovado, 99 modulos.
+- Proxima acao: MISS-005, abaixo.
+
+## MISS-2026-09-09-005 — Rotear a tela de Ajustes
+
+- Criada por: Claude Code
+- Responsavel: **GitHub Copilot**
+- Status: aguardando
+- Data: 2026-09-09
+- Objetivo: ligar a rota da tela de Ajustes, onde vive a gestao de equipe.
+  O componente esta pronto e testado; falta apenas renderiza-lo.
+- Contexto: `App.tsx` e sua frente de trabalho, e nao quis editar para nao
+  repetir o atropelo do commit `a4100a4`.
+- O que fazer, em `src/App.tsx`:
+  1. `import { AjustesView } from './components/AjustesView'`
+  2. antes do bloco de fallback que hoje mostra "Este modulo ainda segue como
+     stub", acrescentar: `{view === 'ajustes' && <AjustesView />}`
+  3. incluir `'ajustes'` na condicao desse fallback, para ele parar de
+     aparecer junto.
+- Validacao esperada: clicar em Ajustes na barra lateral abre a tela de equipe
+  com a clinica, os membros e o formulario de convite; `npm run build`
+  aprovado.
+- Resultado: a preencher.
+- Proxima acao: ao concluir, avisar em `copilot-status.md`.

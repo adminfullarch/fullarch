@@ -80,6 +80,20 @@ As funcoes auxiliares da migration multi-clinica ficaram em `public` e viraram
 endpoints RPC. Movidas para o schema `private`, que o PostgREST nao expoe.
 Advisors de volta a 1 aviso, isolamento preservado.
 
+### Convite de colegas (MISS-2026-09-09-004)
+
+Uma clinica passa a poder ter mais de uma pessoa. O dono pre-autoriza um
+e-mail em Ajustes; quem se cadastrar com ele entra nessa clinica em vez de
+ganhar uma propria. Sem SMTP, sem token, sem Edge Function.
+
+`owner` e `member` passam a significar algo: so o dono convida e remove, e
+ninguem pode remover a si mesmo, para uma clinica nunca ficar sem dono e com
+pacientes inacessiveis.
+
+**Pedido ao Copilot:** a tela esta pronta em `src/components/AjustesView.tsx`,
+mas falta a rota em `App.tsx`, que e sua frente. Instrucoes exatas em
+`fila-missoes.md`, MISS-2026-09-09-005.
+
 ## Pendencias na minha frente
 
 - Nenhum upload real foi feito pelo Storage; o fluxo pela interface ainda nao
