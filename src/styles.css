@@ -367,6 +367,99 @@
   .quest-chip:hover{ border-color: var(--ink-faint); color: var(--ink); }
   .quest-chip.selected{ background: var(--accent); border-color: var(--accent); color:#fff; font-weight:500; }
 
+  /* ---------- ANAMNESE ---------- */
+  .anamnese-top{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  .anamnese-status{ font-size:11px; color: var(--ink-faint); }
+  .anamnese-error{ color:#9C4A3C; }
+
+  .anamnese-dados{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:12px 16px;
+    background: var(--surface-2); border:1px solid var(--border); border-radius: var(--radius);
+    padding:14px 16px; margin-bottom:18px;
+  }
+
+  .anamnese-nav{
+    display:flex; flex-wrap:wrap; gap:6px;
+    padding-bottom:14px; margin-bottom:16px; border-bottom:1px solid var(--border);
+  }
+  .anamnese-nav-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:500; color: var(--ink-soft);
+    padding:6px 12px; border-radius:20px;
+    border:1px solid var(--border); background: var(--surface);
+    transition: background .12s, border-color .12s, color .12s;
+    touch-action:manipulation;
+  }
+  .anamnese-nav-btn:hover{ border-color: var(--ink-faint); color: var(--ink); }
+  .anamnese-nav-btn.active{ background: var(--accent); border-color: var(--accent); color:#fff; font-weight:600; }
+  .anamnese-count{
+    font-size:10px; font-weight:600; line-height:1;
+    padding:2px 6px; border-radius:10px;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .anamnese-nav-btn.active .anamnese-count{ background:rgba(255,255,255,.22); color:#fff; }
+
+  .anamnese-intro{ font-size:12.5px; line-height:1.5; color: var(--ink-soft); margin-bottom:18px; }
+
+  .anamnese-secao{
+    background: var(--surface); border:1px solid var(--border); border-radius: var(--radius);
+    padding:16px 18px 18px; margin-bottom:12px;
+  }
+  .anamnese-secao-head{ display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .anamnese-secao-head h3{ font-size:13px; font-weight:600; color: var(--ink); }
+  .anamnese-badge{
+    font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em;
+    padding:2px 8px; border-radius:10px;
+    background: var(--amber-soft); color: var(--amber);
+  }
+  .anamnese-nota{ font-size:11.5px; line-height:1.5; color: var(--ink-faint); margin-bottom:12px; }
+
+  .anamnese-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px 18px; margin-top:12px;
+  }
+  .anamnese-grid:empty{ margin-top:0; }
+  .anamnese-campo{ display:flex; flex-direction:column; gap:5px; min-width:0; }
+  .anamnese-campo.wide{ grid-column:1 / -1; }
+  .anamnese-campo.is-check{
+    flex-direction:row; align-items:center; gap:9px;
+    font-size:12.5px; color: var(--ink); cursor:pointer;
+  }
+  .anamnese-campo.is-check input{
+    width:15px; height:15px; flex-shrink:0; accent-color: var(--accent); cursor:pointer;
+  }
+  .anamnese-label{ font-size:11.5px; font-weight:500; color: var(--ink-soft); line-height:1.4; }
+
+  .anamnese-opcoes{ display:flex; flex-wrap:wrap; gap:5px; }
+  .anamnese-opcao{
+    font-size:11.5px; padding:5px 11px; border-radius:20px;
+    border:1px solid var(--border); background: var(--surface-2); color: var(--ink-soft);
+    transition: background .12s, border-color .12s, color .12s;
+    touch-action:manipulation;
+  }
+  .anamnese-opcao:active{ transform:scale(0.95); }
+  .anamnese-opcao:hover{ border-color: var(--ink-faint); color: var(--ink); }
+  .anamnese-opcao.selected{ background: var(--accent); border-color: var(--accent); color:#fff; font-weight:500; }
+
+  .periograma{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:6px;
+  }
+  .sextante{
+    background: var(--surface-2); border:1px solid var(--border); border-radius:8px;
+    padding:10px 12px; text-align:center;
+  }
+  .sextante-label{ font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color: var(--ink-soft); }
+  .sextante-dentes{ font-family: var(--font-mono); font-size:11px; color: var(--ink-faint); margin:2px 0 8px; }
+  .sextante-input{ display:flex; align-items:center; justify-content:center; gap:5px; }
+  .sextante-input .field-input{ width:60px; text-align:center; padding:6px 4px; }
+  .sextante-unidade{ font-size:11px; color: var(--ink-faint); }
+
+  @media (max-width:700px){
+    .anamnese-grid{ grid-template-columns:1fr; }
+    .periograma{ grid-template-columns:1fr 1fr; }
+    .anamnese-nav-btn{ font-size:11px; padding:5px 10px; }
+    .anamnese-secao{ padding:14px; }
+  }
+
   /* ---------- TRATAMENTOS ---------- */
   .treat-section-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
   .treat-card{

@@ -6,13 +6,15 @@ import { financialLabel } from '../utils/patientStatus'
 import { FilesTab } from './FilesTab'
 import { OdontogramaTab } from './OdontogramaTab'
 import { TreatmentsTab } from './TreatmentsTab'
+import { AnamneseTab } from './AnamneseTab'
 import { supabase } from '../lib/supabase'
 
-type Tab = 'timeline' | 'tratamentos' | 'odontograma' | 'imagens' | 'documentos'
+type Tab = 'timeline' | 'tratamentos' | 'anamnese' | 'odontograma' | 'imagens' | 'documentos'
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'timeline', label: 'Timeline' },
   { key: 'tratamentos', label: 'Tratamentos' },
+  { key: 'anamnese', label: 'Anamnese' },
   { key: 'odontograma', label: 'Odontograma' },
   { key: 'imagens', label: 'Imagens' },
   { key: 'documentos', label: 'Documentos' },
@@ -102,6 +104,7 @@ export function PatientProfile({ patientId, onDeleted }: { patientId: string; on
             onGoToTooth={() => setTab('odontograma')}
           />
         )}
+        {tab === 'anamnese' && <AnamneseTab patientId={patient.id} />}
         {tab === 'odontograma' && <OdontogramaTab patientId={patient.id} onChanged={reload} />}
         {tab === 'imagens' && (
           <FilesTab patientId={patient.id} patientName={patient.name} kind="image" onChanged={reload} />
