@@ -114,7 +114,7 @@ Formato de cada entrada:
 
 - Criada por: Claude Code
 - Responsavel: **GitHub Copilot**
-- Status: aguardando
+- Status: feita localmente, **nao commitada**
 - Data: 2026-09-09
 - Objetivo: ligar a rota da tela de Ajustes, onde vive a gestao de equipe.
   O componente esta pronto e testado; falta apenas renderiza-lo.
@@ -129,5 +129,48 @@ Formato de cada entrada:
 - Validacao esperada: clicar em Ajustes na barra lateral abre a tela de equipe
   com a clinica, os membros e o formulario de convite; `npm run build`
   aprovado.
-- Resultado: a preencher.
-- Proxima acao: ao concluir, avisar em `copilot-status.md`.
+- Resultado: as tres alteracoes foram feitas corretamente em `src/App.tsx`
+  (import na linha 11, `{view === 'ajustes' && <AjustesView />}` na 82, e
+  `view !== 'ajustes'` acrescentado ao fallback na 84). `npm run build`
+  aprovado, bundle de 458 KB para 463 KB.
+- **Pendencia:** as mudancas estao apenas no working tree. `origin/main` ainda
+  esta em `b0cb284`, entao **a tela nao esta publicada**. Falta commitar
+  `src/App.tsx` e `memorias-ia/copilot-status.md` e dar push.
+
+---
+
+# FRENTE PAUSADA: equipe e times
+
+Em 2026-09-09 o usuario decidiu **deixar a frente de equipe/times para depois**.
+Nenhuma missao nova deve ser aberta nela ate que ele retome.
+
+## O que ja existe e esta em producao
+
+Atencao: pausada nao quer dizer inexistente. As migrations **ja foram aplicadas
+no banco de producao** e nao foram revertidas:
+
+- `0006` a `0008`: isolamento por clinica. **Isto e a base de seguranca do
+  sistema e nao deve ser desfeito** — sem ele, qualquer cadastro publico volta
+  a enxergar todos os prontuarios.
+- `0009`: tabela `clinic_invites`, coluna `email` em `clinic_members`, funcao
+  `private.sou_dono`, trigger que faz o convidado cair na clinica certa, e as
+  politicas que restringem convite e remocao ao dono.
+
+No codigo, ja commitados e no `main`: `src/api/team.ts`,
+`src/components/AjustesView.tsx` e os tipos correspondentes.
+
+## O que falta para a frente ficar completa
+
+1. Commitar e publicar a rota de Ajustes (MISS-005 acima). Enquanto isso nao
+   acontecer, a tela existe mas e inalcancavel pelo menu.
+2. Exercitar o fluxo de convite ponta a ponta pelo navegador. Ele foi validado
+   no banco, em transacao desfeita, mas nunca por uma pessoa de verdade.
+3. A tela de cadastro nao pergunta o nome da clinica: toda conta nova nasce
+   como "Minha clinica". Basta passar `clinic_name` em `options.data` no
+   `signUp` — o trigger ja le esse campo. `Login.tsx` e do Copilot.
+4. Nao ha plano, assinatura nem cobranca.
+5. `private.definir_clinica_do_paciente` usa `limit 1`: se alguem pertencer a
+   duas clinicas, o paciente cai numa delas de forma arbitraria.
+
+---
+

@@ -111,7 +111,30 @@ mas falta a rota em `App.tsx`, que e sua frente. Instrucoes exatas em
 - **Nao ligar o Captcha** em Attack Protection sem antes implementar o widget
   no `Login.tsx`: o Supabase passaria a exigir o token e o login quebraria.
 
+## Frente de equipe/times: PAUSADA
+
+Por decisao do usuario em 2026-09-09, a frente de equipe e times fica para
+depois. Nao abrir missao nova nela sem ele retomar.
+
+O que ja esta em producao e o que falta para completar estao detalhados em
+[`fila-missoes.md`](fila-missoes.md), na secao "FRENTE PAUSADA". O ponto que
+mais engana e a rota de Ajustes: o Copilot ja a ligou localmente, mas nao
+commitou, entao a tela existe no codigo e nao aparece no site.
+
 ## Proxima acao
 
-Aguardar o usuario exercitar upload de imagem e documento em
-`https://fullarch.vercel.app` e registrar o resultado aqui.
+Com a frente de equipe pausada, as missoes disponiveis sao:
+
+1. **Validar em producao** anamnese e upload, que seguem com zero uso real —
+   0 respostas de anamnese, 0 arquivos, 0 objetos no bucket. Depende do
+   usuario no navegador.
+2. **Sanear o historico de migrations**: `0001_init.sql` continua sem registro,
+   entao o banco nao pode ser recriado do zero nem clonado para um ambiente de
+   teste.
+3. **Terminar a anamnese**: esconder Pediatria para pacientes adultos e trazer
+   de volta a impressao/exportacao que existia no esboco e nao foi
+   transportada.
+
+Pendente com o usuario, independente de missao: ligar a protecao contra senhas
+vazadas em Authentication > Sign In / Providers > Email. E o unico aviso de
+seguranca restante.
