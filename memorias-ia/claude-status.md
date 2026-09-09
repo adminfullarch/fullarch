@@ -1,7 +1,71 @@
 # Status do Claude Code
 
 - **Atualizado em:** 2026-09-09
-- **Status:** aguardando leitura do canal
-- **Ultima missao recebida:** nenhuma registrada nesta sessao.
-- **Ultimo resultado:** ainda nao informado.
-- **Proxima acao:** ler `canal-agentes.md`, `fila-missoes.md` e os handoffs existentes antes de iniciar trabalho.
+- **Status:** frente de armazenamento entregue no codigo e no banco, aguardando
+  validacao pela interface.
+
+## Missoes concluidas nesta sessao
+
+### Aba de anamnese odontologica
+
+Transportada do esboco `anamnese.html` para o app, seguindo o design system.
+As 9 especialidades viraram dados em `src/data/anamnese.ts`; o componente
+apenas renderiza. Publicada em producao.
+
+- Arquivos: `src/data/anamnese.ts`, `src/components/AnamneseTab.tsx`,
+  `src/components/PatientProfile.tsx`, `src/api/questionnaire.ts`,
+  `src/styles.css`, `supabase/migrations/0002_anamnese.sql`.
+- Validacao: `npm run build` aprovado; migration aplicada; upsert testado no
+  banco real; bundle publicado em `https://fullarch.vercel.app` confere.
+- Detalhes em [`anamnese.md`](anamnese.md).
+
+### Handoff de testes do Google Drive
+
+Executado e **bloqueado**: a Edge Function `drive-upload` nunca esteve
+publicada no projeto, entao 10 dos 12 testes nao tinham endpoint para
+exercitar. O resultado item a item ficou registrado em
+[`handoff-testes-google-drive.md`](handoff-testes-google-drive.md), agora
+marcado como obsoleto.
+
+### Migracao do armazenamento para o Supabase Storage
+
+O caminho do Drive foi abandonado por decisao do usuario, apos tres problemas
+identificados na leitura do codigo: conta de servico nao tem cota propria, o
+escopo `drive.file` nao alcanca pasta criada manualmente, e o `webViewLink`
+salvo apontava para arquivo que o navegador do dentista nao teria permissao de
+abrir. Detalhes em [`armazenamento-de-arquivos.md`](armazenamento-de-arquivos.md).
+
+- Arquivos: `src/api/files.ts`, `src/components/FilesTab.tsx`,
+  `src/types/database.types.ts`, `src/styles.css`,
+  `supabase/migrations/0003_storage_arquivos.sql`. Removido:
+  `supabase/functions/drive-upload/index.ts`.
+- Validacao: `npm run build` aprovado, 98 modulos; bucket privado, tres
+  politicas e coluna `storage_path` confirmados por consulta ao banco.
+
+## Aviso sobre o commit a4100a4
+
+Ao commitar a migracao para o Storage, usei `git add -A` sobre `src/`,
+`supabase/` e `memorias-ia/`. Isso varreu junto trabalho em andamento do
+Copilot — `src/components/LandingPage.tsx`, alteracoes em `App.tsx` e
+`Login.tsx`, e os quatro arquivos deste canal — que foram commitados sob a
+minha mensagem e publicados na `main`.
+
+O build passa com tudo junto e nada aparenta ter quebrado, mas o conteudo foi
+para producao sem revisao do autor. Fica o registro. Daqui em diante listo os
+caminhos explicitamente no `git add`.
+
+## Pendencias na minha frente
+
+- Nenhum upload real foi feito pelo Storage; o fluxo pela interface ainda nao
+  foi exercitado por um usuario.
+- As politicas do bucket permitem que qualquer usuario autenticado leia ou
+  apague qualquer arquivo. Suficiente para uma clinica; precisa filtrar por
+  prefixo de caminho antes de qualquer abertura multi-clinica.
+- Nao ha limite de tamanho nem validacao de tipo no upload.
+- O historico de migrations do banco esta incompleto: `0001_init.sql` foi
+  aplicado a mao e nao consta como executado.
+
+## Proxima acao
+
+Aguardar o usuario exercitar upload de imagem e documento em
+`https://fullarch.vercel.app` e registrar o resultado aqui.
