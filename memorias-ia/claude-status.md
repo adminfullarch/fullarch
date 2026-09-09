@@ -54,6 +54,17 @@ O build passa com tudo junto e nada aparenta ter quebrado, mas o conteudo foi
 para producao sem revisao do autor. Fica o registro. Daqui em diante listo os
 caminhos explicitamente no `git add`.
 
+### Limpeza de seguranca do banco (MISS-2026-09-09-001)
+
+O banco carregava sete funcoes de uma tentativa anterior de autenticacao
+propria, fora de qualquer migration. Por serem SECURITY DEFINER no schema
+`public`, eram chamaveis por qualquer visitante via `/rest/v1/rpc/<nome>`.
+Nenhuma era usada pelo app, e as tabelas que consultavam (`usuarios`,
+`perfis`) nao existem em schema algum.
+
+Todas removidas em `supabase/migrations/0005_limpeza_seguranca.sql`. Os
+advisors de seguranca cairam de 15 avisos para 1.
+
 ## Pendencias na minha frente
 
 - Nenhum upload real foi feito pelo Storage; o fluxo pela interface ainda nao
@@ -64,6 +75,8 @@ caminhos explicitamente no `git add`.
 - Nao ha limite de tamanho nem validacao de tipo no upload.
 - O historico de migrations do banco esta incompleto: `0001_init.sql` foi
   aplicado a mao e nao consta como executado.
+- **Com o usuario:** ligar a protecao contra senhas vazadas em
+  Authentication > Policies no painel. E o unico aviso de seguranca restante.
 
 ## Proxima acao
 
