@@ -15,6 +15,7 @@ Esta pasta concentra o contexto persistente usado pelas IAs que trabalham no CRM
 
 - [`avaliacao-inicial.md`](avaliacao-inicial.md): avaliacao tecnica inicial do estado do projeto.
 - [`colaboracao-agentes.md`](colaboracao-agentes.md): responsabilidades do GitHub Copilot e do Claude Code.
+- [`acessos-e-deploy.md`](acessos-e-deploy.md): onde ficam GitHub, Vercel e Supabase, e como publicar. Sem credenciais.
 - [`anamnese.md`](anamnese.md): aba de anamnese multiespecialidade no prontuario.
 - [`armazenamento-de-arquivos.md`](armazenamento-de-arquivos.md): decisao de usar Supabase Storage no lugar do Google Drive.
 - [`multi-clinica.md`](multi-clinica.md): isolamento por clinica na RLS, base do modelo de venda do software.
