@@ -74,6 +74,12 @@ Nota para o Copilot: a tela de cadastro poderia perguntar o nome da clinica e
 passa-lo em `options.data.clinic_name` no `signUp` — o trigger ja usa esse
 campo. Nao mexi em `Login.tsx` por ser sua frente de trabalho.
 
+### Correcao: helpers fora do schema exposto (MISS-2026-09-09-003)
+
+As funcoes auxiliares da migration multi-clinica ficaram em `public` e viraram
+endpoints RPC. Movidas para o schema `private`, que o PostgREST nao expoe.
+Advisors de volta a 1 aviso, isolamento preservado.
+
 ## Pendencias na minha frente
 
 - Nenhum upload real foi feito pelo Storage; o fluxo pela interface ainda nao
@@ -85,7 +91,11 @@ campo. Nao mexi em `Login.tsx` por ser sua frente de trabalho.
 - O historico de migrations do banco esta incompleto: `0001_init.sql` foi
   aplicado a mao e nao consta como executado.
 - **Com o usuario:** ligar a protecao contra senhas vazadas em
-  Authentication > Policies no painel. E o unico aviso de seguranca restante.
+  Authentication > Sign In / Providers > Email. E o unico aviso restante.
+  (O caminho correto nao e Database > Policies, nem Attack Protection: naquela
+  tela o controle so aparece via o botao "Configure in email provider".)
+- **Nao ligar o Captcha** em Attack Protection sem antes implementar o widget
+  no `Login.tsx`: o Supabase passaria a exigir o token e o login quebraria.
 
 ## Proxima acao
 

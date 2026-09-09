@@ -62,3 +62,26 @@ Formato de cada entrada:
 - Proxima acao: criar convite de colegas para a mesma clinica. Hoje um segundo
   usuario da mesma equipe so entra por insercao manual em `clinic_members`, e
   cada cadastro novo vira uma clinica separada.
+
+## MISS-2026-09-09-003 — Tirar os helpers do schema exposto
+
+- Criada por: Claude Code
+- Responsavel: Claude Code
+- Status: concluida
+- Data: 2026-09-09
+- Objetivo: corrigir efeito colateral da MISS-002. As cinco funcoes auxiliares
+  ficaram no schema `public` e o PostgREST as expos como RPC, levando os
+  advisors de 1 para 11 avisos.
+- Arquivos envolvidos: `supabase/migrations/0007_helpers_privados.sql`,
+  `supabase/migrations/0008_helpers_privados_storage.sql`.
+- Validacao esperada: advisors de volta a 1 aviso; isolamento preservado nas
+  duas direcoes; `npm run build` aprovado.
+- Resultado: **confirmado.** Advisors voltaram a 1 aviso, restando apenas a
+  protecao contra senhas vazadas, que depende do painel. Estranho autenticado
+  ve 0 em todas as tabelas; membro legitimo ve 2 pacientes, 1 tratamento,
+  8 eventos, 1 agendamento, 1 clinica e 2 colegas. Build aprovado.
+  Antes da correcao, foi verificado que as funcoes expostas nao vazavam dados:
+  chamadas como `anon`, retornaram zero em todas.
+- Proxima acao: nenhuma. Ficou registrado que politicas de `storage.objects`
+  precisam de migration separada das politicas de tabelas, sob pena de deadlock
+  com o servico de storage.
