@@ -25,6 +25,12 @@ const features = [
   },
 ]
 
+const workflow = [
+  { step: '01', title: 'Encontre', text: 'O prontuario certo em poucos segundos.' },
+  { step: '02', title: 'Entenda', text: 'Veja historico, tratamento e proximos passos.' },
+  { step: '03', title: 'Cuide', text: 'Registre o atendimento e siga em frente.' },
+]
+
 export function LandingPage({ onLogin }: LandingPageProps) {
   return (
     <main className="landing-page">
@@ -64,9 +70,29 @@ export function LandingPage({ onLogin }: LandingPageProps) {
           <div className="landing-art-ring landing-art-ring-one" />
           <div className="landing-art-ring landing-art-ring-two" />
           <div className="landing-art-note landing-art-note-top">visao do paciente</div>
+          <div className="landing-dashboard-card landing-dashboard-card-top">
+            <div className="landing-dashboard-label">Hoje, 09:42</div>
+            <strong>3 consultas</strong>
+            <span className="landing-dashboard-line"><i style={{ width: '68%' }} /></span>
+          </div>
           <img src="/mascote-dentinho.png" alt="Mascote dentinho Fullarch" />
+          <div className="landing-dashboard-card landing-dashboard-card-bottom">
+            <span className="landing-mini-avatar">MC</span>
+            <div><strong>Marina Costa</strong><small>Tratamento em andamento</small></div>
+            <b>→</b>
+          </div>
           <div className="landing-art-note landing-art-note-bottom">cuidado em cada detalhe</div>
         </div>
+      </section>
+
+      <section className="landing-signal" aria-label="Visao geral do sistema">
+        <div className="landing-signal-heading">
+          <span className="landing-eyebrow">Tudo no seu campo de visao</span>
+          <strong>Uma rotina que respira junto com o consultorio.</strong>
+        </div>
+        <div className="landing-signal-stat"><b>24</b><span>pacientes ativos</span></div>
+        <div className="landing-signal-stat"><b>08</b><span>tratamentos em curso</span></div>
+        <div className="landing-signal-stat"><b>96%</b><span>historico organizado</span></div>
       </section>
 
       <section className="landing-intro" id="visao">
@@ -86,6 +112,23 @@ export function LandingPage({ onLogin }: LandingPageProps) {
             <p>{feature.text}</p>
           </article>
         ))}
+      </section>
+
+      <section className="landing-workflow">
+        <div className="landing-workflow-copy">
+          <p className="landing-eyebrow">Um fluxo mais natural</p>
+          <h2>Da primeira busca ao proximo cuidado.</h2>
+          <p>Menos cliques entre uma informacao e outra. Mais espaco mental para decidir, explicar e cuidar.</p>
+        </div>
+        <div className="landing-workflow-list">
+          {workflow.map((item) => (
+            <div className="landing-workflow-item" key={item.step}>
+              <span>{item.step}</span>
+              <div><h3>{item.title}</h3><p>{item.text}</p></div>
+              <b aria-hidden="true">↗</b>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="landing-closing">
