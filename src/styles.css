@@ -24,7 +24,8 @@
     background: var(--bg);
     color: var(--ink);
     height:100vh;
-    overflow:hidden;
+    overflow-x:hidden;
+    overflow-y:auto;
     -webkit-font-smoothing:antialiased;
     -webkit-tap-highlight-color: transparent;
   }
@@ -818,7 +819,7 @@
 
   /* ---------- LANDING PAGE ---------- */
   .landing-page{
-    height:100vh; overflow-x:hidden; overflow-y:auto; color:#26352D;
+    min-height:100vh; color:#26352D;
     background:#F5F1E9;
     background-image:radial-gradient(circle at 78% 12%, rgba(212,157,85,.18), transparent 25%), linear-gradient(120deg, #F5F1E9 0%, #F8F5EF 48%, #E7EFE7 100%);
   }
