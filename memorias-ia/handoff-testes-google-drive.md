@@ -2,7 +2,10 @@
 
 - **Data:** 2026-09-09
 - **Responsavel pela execucao:** Claude Code
-- **Status:** aguardando testes reais
+- **Status:** OBSOLETO desde 2026-09-09. O armazenamento migrou para o
+  Supabase Storage e a Edge Function `drive-upload` foi removida. Ver
+  [`armazenamento-de-arquivos.md`](armazenamento-de-arquivos.md). Mantido como
+  registro do que foi testado e por que o caminho do Drive foi abandonado.
 
 ## Contexto
 

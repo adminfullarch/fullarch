@@ -1,6 +1,11 @@
 import { supabase } from '../lib/supabase'
 import type { FileKind, PatientFile } from '../types/database.types'
 
+const BUCKET = 'patient-files'
+
+/** Validade das URLs assinadas, em segundos. */
+const URL_VALIDA_POR = 60 * 60
+
 export async function listPatientFiles(patientId: string, kind?: FileKind) {
   let query = supabase
     .from('files')
@@ -14,9 +19,42 @@ export async function listPatientFiles(patientId: string, kind?: FileKind) {
 }
 
 /**
- * Faz upload do arquivo para o Google Drive (via Edge Function, que usa a
- * conta de serviço da clínica) e grava o metadado no Supabase.
- * O binário NUNCA passa pelo cliente-Supabase — só pela Edge Function.
+ * O bucket é privado, então nada é acessível por URL fixa: cada visualização
+ * gera um link assinado que expira. É o que mantém documento e foto de
+ * paciente fora do alcance de quem não está autenticado.
+ */
+export async function signedUrlFor(storagePath: string) {
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(storagePath, URL_VALIDA_POR)
+  if (error) throw error
+  return data.signedUrl
+}
+
+/** Assina vários caminhos de uma vez, para não fazer uma chamada por miniatura. */
+export async function signedUrlsFor(storagePaths: string[]) {
+  if (storagePaths.length === 0) return {}
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrls(storagePaths, URL_VALIDA_POR)
+  if (error) throw error
+  const mapa: Record<string, string> = {}
+  for (const item of data ?? []) {
+    if (item.path && item.signedUrl) mapa[item.path] = item.signedUrl
+  }
+  return mapa
+}
+
+/** Remove acentos e caracteres que atrapalham no caminho do objeto. */
+function nomeSeguro(nome: string) {
+  return nome
+    .normalize('NFD')
+    .replace(/[^ -~]/g, '')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+}
+
+/**
+ * Envia o arquivo direto do navegador para o Supabase Storage, autenticado
+ * pela sessão que já existe, e grava o metadado em `files`.
+ *
+ * Os objetos ficam organizados por paciente e tipo, o que mantém o bucket
+ * navegável e permite, mais adiante, políticas RLS por prefixo de caminho.
  */
 export async function uploadPatientFile(params: {
   file: File
@@ -27,59 +65,55 @@ export async function uploadPatientFile(params: {
   treatmentId?: string
 }) {
   const { data: sessionData } = await supabase.auth.getSession()
-  const token = sessionData.session?.access_token
-  if (!token) throw new Error('Sessão expirada — faça login novamente.')
+  const user = sessionData.session?.user
+  if (!user) throw new Error('Sessão expirada — faça login novamente.')
 
-  const form = new FormData()
-  form.append('file', params.file)
-  form.append('patientId', params.patientId)
-  form.append('patientName', params.patientName)
-  form.append('kind', params.kind)
-  form.append('label', params.label?.trim() || params.file.name)
-  if (params.treatmentId) form.append('treatmentId', params.treatmentId)
+  const caminho = `${params.patientId}/${params.kind}/${Date.now()}_${nomeSeguro(params.file.name)}`
 
-  const functionsUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/drive-upload`
-  const res = await fetch(functionsUrl, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: form,
+  const { error: uploadError } = await supabase.storage.from(BUCKET).upload(caminho, params.file, {
+    contentType: params.file.type || 'application/octet-stream',
+    upsert: false,
   })
+  if (uploadError) throw uploadError
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.error || `Falha no upload (HTTP ${res.status}).`)
+  const { data: fileRow, error: insertError } = await supabase
+    .from('files')
+    .insert({
+      patient_id: params.patientId,
+      treatment_id: params.treatmentId ?? null,
+      kind: params.kind,
+      label: params.label?.trim() || params.file.name,
+      storage_path: caminho,
+      uploaded_by: user.id,
+    })
+    .select()
+    .single()
+
+  // Sem o metadado o objeto viraria lixo invisível no bucket, então desfazemos.
+  if (insertError) {
+    await supabase.storage.from(BUCKET).remove([caminho])
+    throw insertError
   }
-
-  const { file } = (await res.json()) as { file: PatientFile }
 
   // Reflete no que a Timeline já sabe fazer bem: todo arquivo novo vira evento.
   await supabase.from('timeline_events').insert({
     patient_id: params.patientId,
     title: params.kind === 'image' ? 'Imagem adicionada' : 'Documento adicionado',
-    description: file.label,
+    description: fileRow.label,
     kind: params.kind === 'image' ? 'Imagem' : 'Documento',
   })
 
-  return file
+  return fileRow as PatientFile
 }
 
-export async function deletePatientFile(id: string) {
-  const { data: sessionData } = await supabase.auth.getSession()
-  const token = sessionData.session?.access_token
-  if (!token) throw new Error('Sessão expirada — faça login novamente.')
+/**
+ * Remove o objeto antes do metadado. Na ordem inversa, uma falha deixaria o
+ * arquivo órfão no bucket sem nada que apontasse para ele.
+ */
+export async function deletePatientFile(file: Pick<PatientFile, 'id' | 'storage_path'>) {
+  const { error: storageError } = await supabase.storage.from(BUCKET).remove([file.storage_path])
+  if (storageError) throw storageError
 
-  const functionsUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/drive-upload`
-  const res = await fetch(functionsUrl, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ fileId: id }),
-  })
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.error || `Falha ao excluir arquivo (HTTP ${res.status}).`)
-  }
+  const { error } = await supabase.from('files').delete().eq('id', file.id)
+  if (error) throw error
 }

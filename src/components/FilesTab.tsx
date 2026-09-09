@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FileKind, PatientFile } from '../types/database.types'
-import { deletePatientFile, listPatientFiles, uploadPatientFile } from '../api/files'
+import { deletePatientFile, listPatientFiles, signedUrlFor, signedUrlsFor, uploadPatientFile } from '../api/files'
 
 export function FilesTab({
   patientId,
@@ -14,6 +14,7 @@ export function FilesTab({
   onChanged?: () => void
 }) {
   const [files, setFiles] = useState<PatientFile[]>([])
+  const [urls, setUrls] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,7 +23,11 @@ export function FilesTab({
   const reload = useCallback(async () => {
     setLoading(true)
     try {
-      setFiles(await listPatientFiles(patientId, kind))
+      const lista = await listPatientFiles(patientId, kind)
+      setFiles(lista)
+      // Miniaturas só fazem sentido para imagens; documentos assinam ao clicar.
+      setUrls(kind === 'image' ? await signedUrlsFor(lista.map((f) => f.storage_path)) : {})
+      setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar arquivos.')
     } finally {
@@ -44,7 +49,7 @@ export function FilesTab({
       await reload()
       onChanged?.()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha no upload para o Google Drive.')
+      setError(err instanceof Error ? err.message : 'Falha no upload.')
     } finally {
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ''
@@ -52,14 +57,23 @@ export function FilesTab({
   }
 
   async function handleDelete(file: PatientFile) {
-    if (!window.confirm(`Excluir ${file.label}? Esta ação também remove o arquivo do Google Drive.`)) return
+    if (!window.confirm(`Excluir ${file.label}? Esta ação não pode ser desfeita.`)) return
     setError(null)
     try {
-      await deletePatientFile(file.id)
+      await deletePatientFile(file)
       await reload()
       onChanged?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao excluir arquivo.')
+    }
+  }
+
+  /** O link expira, então é gerado no clique e não guardado na página. */
+  async function abrir(file: PatientFile) {
+    try {
+      window.open(await signedUrlFor(file.storage_path), '_blank', 'noreferrer')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao abrir o arquivo.')
     }
   }
 
@@ -100,14 +114,9 @@ export function FilesTab({
         <div className="img-grid">
           {files.map((f) => (
             <div key={f.id}>
-              <a
-                className="img-card"
-                data-label={f.label}
-                href={f.google_drive_url}
-                target="_blank"
-                rel="noreferrer"
-                style={{ display: 'block' }}
-              />
+              <button className="img-card" data-label={f.label} onClick={() => abrir(f)} title={f.label}>
+                {urls[f.storage_path] && <img src={urls[f.storage_path]} alt={f.label} />}
+              </button>
               <button className="btn btn-ghost" onClick={() => handleDelete(f)} style={{ marginTop: 6 }}>
                 Excluir
               </button>
@@ -118,16 +127,14 @@ export function FilesTab({
         <div>
           {files.map((f) => (
             <div key={f.id} style={{ marginBottom: 8 }}>
-              <a
-                href={f.google_drive_url}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                onClick={() => abrir(f)}
                 className="treat-card"
-                style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+                style={{ display: 'block', width: '100%', textAlign: 'left' }}
               >
                 <div className="treat-name">{f.label}</div>
-                <div className="treat-meta">{new Date(f.created_at).toLocaleDateString('pt-BR')} · Google Drive</div>
-              </a>
+                <div className="treat-meta">{new Date(f.created_at).toLocaleDateString('pt-BR')}</div>
+              </button>
               <button className="btn btn-ghost" onClick={() => handleDelete(f)} style={{ marginTop: 6 }}>
                 Excluir
               </button>

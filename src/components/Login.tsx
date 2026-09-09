@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 
-export function Login() {
+export function Login({ onBack }: { onBack?: () => void }) {
   const { signIn, signUp } = useAuth()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
@@ -45,6 +45,11 @@ export function Login() {
       <div className="login-orbit login-orbit-one" />
       <div className="login-orbit login-orbit-two" />
       <form onSubmit={handleSubmit} className="login-card">
+        {onBack && (
+          <button type="button" className="login-back" onClick={onBack}>
+            ← Voltar para apresentação
+          </button>
+        )}
         <div className="login-mascot" aria-hidden="true">
           <img className="mascot-image" src="/mascote-dentinho.png" alt="Mascote dentinho Fullarch" />
         </div>

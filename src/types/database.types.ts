@@ -96,8 +96,7 @@ export interface PatientFile {
   treatment_id: string | null
   kind: FileKind
   label: string
-  google_drive_file_id: string
-  google_drive_url: string
+  storage_path: string
   uploaded_by: string | null
   created_at: string
 }

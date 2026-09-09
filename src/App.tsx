@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { usePatients } from './hooks/usePatients'
 import { Login } from './components/Login'
+import { LandingPage } from './components/LandingPage'
 import { Sidebar, ViewName } from './components/Sidebar'
 import { PatientList } from './components/PatientList'
 import { PatientProfile } from './components/PatientProfile'
@@ -13,9 +14,10 @@ export default function App() {
   const { patients, loading: patientsLoading, error: patientsError, reload } = usePatients(Boolean(session))
   const [view, setView] = useState<ViewName>('pacientes')
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [showLogin, setShowLogin] = useState(false)
 
   if (loading) return <div style={{ padding: 40 }}>Carregando…</div>
-  if (!session) return <Login />
+  if (!session) return showLogin ? <Login onBack={() => setShowLogin(false)} /> : <LandingPage onLogin={() => setShowLogin(true)} />
 
   return (
     <div className={`app ${view !== 'pacientes' ? 'full' : ''}`}>
