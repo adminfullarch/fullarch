@@ -70,9 +70,38 @@ sensivel de saude e o ponto principal a preservar em qualquer mudanca futura.
   clinica, entao o impacto e limitado. Antes de abrir para varias clinicas, as
   politicas precisam filtrar por prefixo de caminho, e o caminho ja comeca com
   o `patientId` justamente para permitir isso.
-- Nao ha limite de tamanho nem validacao de tipo no upload.
 - O handoff de testes do Drive foi removido do canal junto com a decisao: a
   function que ele testava nao existe mais.
+
+## Filtro de upload
+
+Imagens aceitam `.jpg`, `.jpeg`, `.png`, `.webp`, `.heic` e `.heif`, ate 15 MB.
+Documentos aceitam `.pdf`, `.doc`, `.docx`, `.odt`, `.rtf`, `.txt`, `.xls` e
+`.xlsx`, ate 25 MB. As regras ficam em `src/data/uploadRules.ts`.
+
+A validacao existe em duas camadas. No navegador, `validarArquivo` confere
+extensao, tamanho e os primeiros bytes do arquivo, e serve para dar mensagem
+clara antes de gastar banda. No servidor, o bucket tem `allowed_mime_types` e
+`file_size_limit`, e **essa e a camada que protege** — qualquer usuario
+autenticado pode chamar a API do Storage direto e ignorar o navegador.
+
+**SVG e HTML estao bloqueados de proposito, nas duas camadas.** SVG e XML e
+aceita `<script>` embutido; aberto no navegador, executaria JavaScript no
+contexto de quem abriu, que e XSS armazenado. Radiografia e foto intraoral
+nunca sao SVG, entao nao ha o que perder. Nao afrouxar isso.
+
+O content-type enviado ao Storage vem da extensao ja validada, nunca do
+`file.type` informado pelo navegador: arquivos HEIC de iPhone costumam chegar
+com tipo vazio, e um tipo forjado nao deve decidir como o arquivo sera servido
+depois.
+
+A checagem de assinatura pega o arquivo renomeado — um `.html` salvo como
+`.jpg` passa pela extensao, mas nao tem assinatura de imagem. TXT nao tem
+assinatura estavel e por isso nao e checado.
+
+Vale registrar o que o filtro **nao** faz: ele nao e antivirus. Um `.docx` com
+macro maliciosa passa, porque e um ZIP valido com a extensao certa. O risco ai
+e para a maquina de quem baixa, nao para o banco.
 
 ## Validacao
 

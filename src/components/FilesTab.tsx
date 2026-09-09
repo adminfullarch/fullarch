@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FileKind, PatientFile } from '../types/database.types'
 import { deletePatientFile, listPatientFiles, signedUrlFor, signedUrlsFor, uploadPatientFile } from '../api/files'
+import { REGRAS } from '../data/uploadRules'
 
 export function FilesTab({
   patientId,
@@ -94,10 +95,13 @@ export function FilesTab({
         <input
           ref={inputRef}
           type="file"
-          accept={kind === 'image' ? 'image/*' : undefined}
+          accept={REGRAS[kind].accept}
           style={{ display: 'none' }}
           onChange={(e) => handleFileChosen(e.target.files)}
         />
+        <span style={{ alignSelf: 'center', fontSize: 11, color: 'var(--ink-faint)' }}>
+          {REGRAS[kind].descricao} · até {Math.round(REGRAS[kind].tamanhoMaximo / (1024 * 1024))} MB
+        </span>
       </div>
 
       {error && <p style={{ color: '#9C4A3C', fontSize: 12.5, marginBottom: 12 }}>{error}</p>}

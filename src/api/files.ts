@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { FileKind, PatientFile } from '../types/database.types'
+import { validarArquivo } from '../data/uploadRules'
 
 const BUCKET = 'patient-files'
 
@@ -68,10 +69,16 @@ export async function uploadPatientFile(params: {
   const user = sessionData.session?.user
   if (!user) throw new Error('Sessão expirada — faça login novamente.')
 
+  const validacao = await validarArquivo(params.file, params.kind)
+  if (!validacao.ok) throw new Error(validacao.erro)
+
   const caminho = `${params.patientId}/${params.kind}/${Date.now()}_${nomeSeguro(params.file.name)}`
 
   const { error: uploadError } = await supabase.storage.from(BUCKET).upload(caminho, params.file, {
-    contentType: params.file.type || 'application/octet-stream',
+    // O content-type vem da extensao validada, nunca do que o navegador
+    // informou: arquivos HEIC de iPhone costumam chegar com o tipo vazio, e um
+    // tipo forjado nao deve decidir como o arquivo sera servido depois.
+    contentType: validacao.contentType,
     upsert: false,
   })
   if (uploadError) throw uploadError
