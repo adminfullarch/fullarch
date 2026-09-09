@@ -93,7 +93,7 @@ async function getOrCreatePatientFolder(
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
-  if (req.method !== 'POST') return json({ error: 'Método não permitido.' }, 405)
+  if (req.method !== 'POST' && req.method !== 'DELETE') return json({ error: 'Método não permitido.' }, 405)
 
   try {
     // 1) Confirma que quem chamou é um usuário autenticado de verdade
@@ -105,6 +105,34 @@ Deno.serve(async (req) => {
     const { data: userData, error: userError } = await userClient.auth.getUser()
     if (userError || !userData.user) {
       return json({ error: 'Não autenticado.' }, 401)
+    }
+
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    if (req.method === 'DELETE') {
+      const body = await req.json().catch(() => ({})) as { fileId?: string }
+      if (!body.fileId) return json({ error: 'fileId é obrigatório.' }, 400)
+
+      const { data: fileRow, error: fileError } = await supabaseAdmin
+        .from('files')
+        .select('id, google_drive_file_id')
+        .eq('id', body.fileId)
+        .maybeSingle()
+
+      if (fileError) return json({ error: fileError.message }, 500)
+      if (!fileRow) return json({ error: 'Arquivo não encontrado.' }, 404)
+
+      const drive = getDriveClient()
+      try {
+        await drive.files.delete({ fileId: fileRow.google_drive_file_id })
+      } catch (err) {
+        const status = (err as { code?: number }).code
+        if (status !== 404) throw err
+      }
+
+      const { error: deleteError } = await supabaseAdmin.from('files').delete().eq('id', fileRow.id)
+      if (deleteError) return json({ error: deleteError.message }, 500)
+      return json({ ok: true })
     }
 
     // 2) Lê o arquivo enviado (multipart/form-data)
@@ -146,7 +174,6 @@ Deno.serve(async (req) => {
     const driveUrl = uploadRes.data.webViewLink ?? `https://drive.google.com/file/d/${driveFileId}/view`
 
     // 4) Grava o metadado no Supabase com a service role (ignora RLS de propósito)
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     const { data: fileRow, error: insertError } = await supabaseAdmin
       .from('files')
       .insert({

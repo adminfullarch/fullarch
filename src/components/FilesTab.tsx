@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FileKind, PatientFile } from '../types/database.types'
-import { listPatientFiles, uploadPatientFile } from '../api/files'
+import { deletePatientFile, listPatientFiles, uploadPatientFile } from '../api/files'
 
 export function FilesTab({
   patientId,
@@ -51,6 +51,18 @@ export function FilesTab({
     }
   }
 
+  async function handleDelete(file: PatientFile) {
+    if (!window.confirm(`Excluir ${file.label}? Esta ação também remove o arquivo do Google Drive.`)) return
+    setError(null)
+    try {
+      await deletePatientFile(file.id)
+      await reload()
+      onChanged?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao excluir arquivo.')
+    }
+  }
+
   const emptyLabel = kind === 'image' ? 'Nenhuma imagem neste prontuário ainda.' : 'Nenhum documento anexado ainda.'
 
   return (
@@ -87,31 +99,39 @@ export function FilesTab({
       ) : kind === 'image' ? (
         <div className="img-grid">
           {files.map((f) => (
-            <a
-              key={f.id}
-              className="img-card"
-              data-label={f.label}
-              href={f.google_drive_url}
-              target="_blank"
-              rel="noreferrer"
-              style={{ display: 'block' }}
-            />
+            <div key={f.id}>
+              <a
+                className="img-card"
+                data-label={f.label}
+                href={f.google_drive_url}
+                target="_blank"
+                rel="noreferrer"
+                style={{ display: 'block' }}
+              />
+              <button className="btn btn-ghost" onClick={() => handleDelete(f)} style={{ marginTop: 6 }}>
+                Excluir
+              </button>
+            </div>
           ))}
         </div>
       ) : (
         <div>
           {files.map((f) => (
-            <a
-              key={f.id}
-              href={f.google_drive_url}
-              target="_blank"
-              rel="noreferrer"
-              className="treat-card"
-              style={{ display: 'block', marginBottom: 8, textDecoration: 'none', color: 'inherit' }}
-            >
-              <div className="treat-name">{f.label}</div>
-              <div className="treat-meta">{new Date(f.created_at).toLocaleDateString('pt-BR')} · Google Drive</div>
-            </a>
+            <div key={f.id} style={{ marginBottom: 8 }}>
+              <a
+                href={f.google_drive_url}
+                target="_blank"
+                rel="noreferrer"
+                className="treat-card"
+                style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+              >
+                <div className="treat-name">{f.label}</div>
+                <div className="treat-meta">{new Date(f.created_at).toLocaleDateString('pt-BR')} · Google Drive</div>
+              </a>
+              <button className="btn btn-ghost" onClick={() => handleDelete(f)} style={{ marginTop: 6 }}>
+                Excluir
+              </button>
+            </div>
           ))}
         </div>
       )}

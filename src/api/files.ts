@@ -64,8 +64,22 @@ export async function uploadPatientFile(params: {
 }
 
 export async function deletePatientFile(id: string) {
-  // Observação: isto remove só o metadado. Remover o arquivo do Drive em si
-  // também exige chamar a Edge Function (ver roadmap no README_MIGRACAO.md).
-  const { error } = await supabase.from('files').delete().eq('id', id)
-  if (error) throw error
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData.session?.access_token
+  if (!token) throw new Error('Sessão expirada — faça login novamente.')
+
+  const functionsUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/drive-upload`
+  const res = await fetch(functionsUrl, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ fileId: id }),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error || `Falha ao excluir arquivo (HTTP ${res.status}).`)
+  }
 }
