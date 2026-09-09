@@ -19,6 +19,8 @@ export type FinancialStatus = 'em_dia' | 'parcial' | 'atrasado'
 
 export interface Patient {
   id: string
+  /** Clinica dona do registro. Preenchida por trigger a partir de quem esta autenticado. */
+  clinic_id: string
   name: string
   age: number | null
   phone: string | null

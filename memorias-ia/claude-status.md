@@ -65,6 +65,15 @@ Nenhuma era usada pelo app, e as tabelas que consultavam (`usuarios`,
 Todas removidas em `supabase/migrations/0005_limpeza_seguranca.sql`. Os
 advisors de seguranca cairam de 15 avisos para 1.
 
+### Isolamento por clinica (MISS-2026-09-09-002)
+
+O acesso passa a depender do pertencimento a uma clinica, em vez de apenas
+estar autenticado. Detalhes e validacao em [`multi-clinica.md`](multi-clinica.md).
+
+Nota para o Copilot: a tela de cadastro poderia perguntar o nome da clinica e
+passa-lo em `options.data.clinic_name` no `signUp` — o trigger ja usa esse
+campo. Nao mexi em `Login.tsx` por ser sua frente de trabalho.
+
 ## Pendencias na minha frente
 
 - Nenhum upload real foi feito pelo Storage; o fluxo pela interface ainda nao
