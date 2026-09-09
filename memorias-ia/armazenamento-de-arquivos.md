@@ -71,8 +71,8 @@ sensivel de saude e o ponto principal a preservar em qualquer mudanca futura.
   politicas precisam filtrar por prefixo de caminho, e o caminho ja comeca com
   o `patientId` justamente para permitir isso.
 - Nao ha limite de tamanho nem validacao de tipo no upload.
-- O handoff `handoff-testes-google-drive.md` esta obsoleto: a function que ele
-  testava nao existe mais.
+- O handoff de testes do Drive foi removido do canal junto com a decisao: a
+  function que ele testava nao existe mais.
 
 ## Validacao
 

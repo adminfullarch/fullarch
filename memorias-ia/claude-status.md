@@ -23,9 +23,9 @@ apenas renderiza. Publicada em producao.
 
 Executado e **bloqueado**: a Edge Function `drive-upload` nunca esteve
 publicada no projeto, entao 10 dos 12 testes nao tinham endpoint para
-exercitar. O resultado item a item ficou registrado em
-[`handoff-testes-google-drive.md`](handoff-testes-google-drive.md), agora
-marcado como obsoleto.
+exercitar. Como o Drive foi descartado, o arquivo do handoff foi removido do
+canal; o motivo do abandono esta em
+[`armazenamento-de-arquivos.md`](armazenamento-de-arquivos.md).
 
 ### Migracao do armazenamento para o Supabase Storage
 

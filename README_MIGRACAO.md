@@ -1,4 +1,4 @@
-# CRM Odontológico — Missão 03 (React + TypeScript + Supabase + Google Drive)
+# CRM Odontológico — Missão 03 (React + TypeScript + Supabase)
 
 **Status desta entrega:** fundação da arquitetura + uma fatia vertical
 **totalmente funcional** (não mockada), ponta a ponta:
@@ -9,12 +9,12 @@ Login (Supabase Auth)
       → criar paciente (Supabase, com evento automático na Timeline)
          → Timeline (ler/criar eventos, anotações, agendamentos)
          → Tratamentos (ler)
-         → Imagens / Documentos (upload real → Google Drive via Edge
-           Function com conta de serviço → metadado gravado no Supabase)
+         → Imagens / Documentos (upload real → Supabase Storage, bucket
+           privado → metadado gravado no Supabase)
 ```
 
 Isso prova que a arquitetura fecha de ponta a ponta — banco, RLS, auth,
-Drive — antes de portar o restante das telas.
+armazenamento — antes de portar o restante das telas.
 
 ---
 
@@ -37,7 +37,7 @@ isso pronto:
 # dentro de supabase/
 supabase login
 supabase link --project-ref SEU_PROJECT_REF
-supabase db push          # aplica supabase/migrations/0001_init.sql
+supabase db push          # aplica tudo em supabase/migrations/
 ```
 
 Crie o primeiro usuário da equipe em **Authentication > Users** no painel
@@ -46,32 +46,7 @@ Crie o primeiro usuário da equipe em **Authentication > Users** no painel
 Copie `.env.example` para `.env.local` e preencha com a URL e a anon key
 do projeto (Settings > API).
 
-## 2. Configurar o Google Drive (conta de serviço)
-
-1. No Google Cloud Console, crie um projeto (ou reaproveite um existente).
-2. Ative a **Google Drive API**.
-3. Crie uma **conta de serviço** e gere uma chave JSON.
-4. No Google Drive, crie a pasta onde os arquivos dos pacientes vão ficar
-   e **compartilhe essa pasta com o e-mail da conta de serviço** (ela não
-   tem Drive próprio — precisa que uma pasta seja compartilhada com ela).
-5. Pegue o ID da pasta (no final da URL) e o `client_email` /
-   `private_key` do JSON da conta de serviço.
-6. Configure os secrets da Edge Function:
-
-```bash
-supabase secrets set GOOGLE_SERVICE_ACCOUNT_EMAIL="conta@projeto.iam.gserviceaccount.com"
-supabase secrets set GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-supabase secrets set GOOGLE_DRIVE_FOLDER_ID="id_da_pasta_no_drive"
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY="sua_service_role_key"
-```
-
-7. Deploy:
-
-```bash
-supabase functions deploy drive-upload
-```
-
-## 3. Rodar o app
+## 2. Rodar o app
 
 ```bash
 npm install
@@ -89,7 +64,7 @@ npm run dev
 | Cadastro de paciente | ✅ escrita real + evento automático na Timeline |
 | Timeline | ✅ leitura + criação (Anotar, Agendar) |
 | Tratamentos | ✅ leitura (criação/edição ainda no padrão da API, falta UI) |
-| Imagens | ✅ upload real → Drive → metadado no Supabase |
+| Imagens | ✅ upload real → Supabase Storage → metadado no Supabase |
 | Documentos | ✅ mesmo componente (`FilesTab`) reaproveitado com `kind="document"` |
 
 ## 3. O que ainda é stub (próximos passos, mesmo padrão)
@@ -114,9 +89,9 @@ Supabase → função em `src/api/` → hook em `src/hooks/` → componente**.
   em `src/api/treatments.ts` já existe; falta o modal.
 - **Registrar sessão de tratamento** — `addTreatmentSession` já existe
   na API; falta o modal.
-- **Deletar arquivo do Drive** (hoje `deletePatientFile` só apaga o
-  metadado) — precisa de uma segunda Edge Function ou de estender a
-  `drive-upload` para aceitar `DELETE` chamando `drive.files.delete`.
+- **Limite de tamanho e validação de tipo no upload** — hoje o
+  `uploadPatientFile` aceita qualquer arquivo; falta restringir antes de
+  enviar ao bucket.
 
 ## 4. Decisões tomadas nesta etapa
 
@@ -124,14 +99,14 @@ Supabase → função em `src/api/` → hook em `src/hooks/` → componente**.
   para tudo. Quando for multi-tenant: adicionar `clinic_id` nas tabelas
   e trocar as policies para checar `clinic_id = auth.jwt() -> 'clinic_id'`
   (ou uma tabela `clinic_members`).
-- **Auth = Supabase Auth (email/senha).** O Google Drive é acessado só
-  pela conta de serviço da clínica, nunca pela conta pessoal do usuário
-  logado — por isso o upload sempre passa pela Edge Function, nunca
-  direto do navegador.
-- **Binário nunca passa pelo cliente-Supabase.** O arquivo vai direto
-  pro Drive via Edge Function; o Supabase só guarda o metadado
-  (`google_drive_file_id`, `google_drive_url`, paciente, tipo, quem
-  enviou).
+- **Auth = Supabase Auth (email/senha).**
+- **Arquivos no Supabase Storage, em bucket privado.** O upload vai direto
+  do navegador, autenticado pela sessão que já existe, e o Supabase guarda o
+  metadado (`storage_path`, paciente, tipo, quem enviou). Nada é servido por
+  URL pública: cada visualização gera uma URL assinada com validade de uma
+  hora, que é o padrão adequado para dado pessoal sensível de saúde.
+  A tentativa anterior de usar o Google Drive foi abandonada; o motivo está
+  em `memorias-ia/armazenamento-de-arquivos.md`.
 - **"Quick facts" deixaram de ser um campo solto** (como no protótipo
   em JS) **e passaram a ser computados** a partir de dados normalizados
   (`treatments`, `appointments`, `patients.financial_status`) em
