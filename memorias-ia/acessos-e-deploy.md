@@ -12,7 +12,19 @@
 
 ## GitHub
 
-- Repositorio: **`adminfullarch/fullarch`**
+- Repositorio: **`adminfullarch/fullarch`** — **privado desde 2026-09-10**.
+  Verificado: `raw.githubusercontent.com` retorna 404 para quem nao esta
+  autenticado.
+
+  Fechar o repositorio protege o historico, as migrations e estas memorias, que
+  descrevem a arquitetura de seguranca em detalhe. **Nao esconde o codigo do
+  frontend**: o navegador de qualquer visitante baixa o bundle JavaScript para
+  poder executar o app, e minificacao embaralha nomes, nao esconde logica. O
+  valor do produto esta no banco, nas regras de isolamento por clinica e na
+  base de clientes — nao no JavaScript entregue ao navegador.
+
+  Verificado tambem que **nenhuma chave vazou** no historico: `.env.local`
+  nunca foi versionado e nao existe token JWT em nenhum commit.
   (renomeado; o nome antigo `fullarck.admin` ainda aparece em remotes velhos —
   corrigir com `git remote set-url origin`).
 - Branch de producao: **`main`**.
