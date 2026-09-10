@@ -2,6 +2,21 @@
 
 Esta pasta concentra o contexto persistente usado pelas IAs que trabalham no CRM odontologico.
 
+## Estagio do projeto
+
+O sistema esta **em desenvolvimento**, nao em producao. Ninguem o usa no dia a
+dia: a dentista que aparece nos registros fez apenas testes de funcionalidade
+para dar retorno ao dono do projeto, e os dois pacientes cadastrados sao
+ficticios.
+
+Isso importa ao avaliar risco. Perda de dado, exposicao e ausencia de backup
+sao assuntos a resolver **antes do lancamento**, e nao incidentes em curso. Da
+mesma forma, tela com dado de maquete e etapa normal de construcao, nao defeito
+a corrigir com urgencia.
+
+Quando o sistema entrar em uso real, com paciente de verdade, este paragrafo
+deve ser atualizado — e a partir dai o peso dessas questoes muda.
+
 ## Como usar
 
 - Crie um arquivo Markdown por assunto ou decisao relevante.

@@ -118,8 +118,9 @@ para validar mudancas**. Recomendado apagar o projeto duplicado.
 
 ## Validado em producao
 
-Em 2026-09-10 uma dentista usou a aba em producao e o usuario confirmou que
-esta funcionando corretamente. Evidencia no banco: a resposta
+Em 2026-09-10 uma dentista testou a aba, como parte de uma rodada de testes de
+funcionalidade para dar retorno, e o usuario confirmou que esta funcionando
+corretamente. O sistema segue em desenvolvimento, sem uso real. Evidencia no banco: a resposta
 `anamnese:med.cardio.hipertensao` = `sim` gravada as 00:44 UTC, pelo fluxo de
 preencher, clicar em Salvar e a tela ficar protegida.
 
