@@ -47,6 +47,27 @@ endereco serve um bundle antigo e congelado, e **nao deve ser usado para
 validar mudancas** — ja custou tempo uma vez. Recomendado apagar o projeto
 duplicado.
 
+### Deploy parado ao tornar o repositorio privado (2026-09-10)
+
+Depois que o repositorio virou privado, **o Vercel parou de publicar**. Os
+commits `9cfc2c8` e `3b7bfdd` chegaram a `origin/main` e nao geraram build: o
+bundle servido em `https://fullarch.vercel.app` continuou sendo o do commit
+`980072e`, o ultimo antes da mudanca de visibilidade.
+
+Como diagnosticar sem acesso ao painel: baixar o JS publicado
+(`curl -s https://fullarch.vercel.app/` para achar o nome do arquivo em
+`/assets/`, depois baixar esse arquivo) e procurar nele um trecho de texto que
+so existe na versao nova. Se o trecho nao aparece, o deploy nao aconteceu — o
+problema nao esta no codigo. Foi assim que se descobriu que as telas de CRM e
+Financeiro nunca tinham sido publicadas, embora estivessem corretas no
+repositorio e o `npm run build` passasse.
+
+A causa e a integracao do GitHub com o Vercel: o Vercel acessa repositorio
+privado atraves do GitHub App, e a instalacao precisa ter esse repositorio
+autorizado. A correcao e no painel — Vercel > Settings > Git (reconectar) ou
+GitHub > Settings > Applications > Vercel > Repository access — e nao no
+codigo.
+
 ### Variaveis de ambiente
 
 Configuradas em Settings > Environment Variables do projeto no Vercel:
