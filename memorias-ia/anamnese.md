@@ -64,7 +64,7 @@ durante a digitacao.
   (nullable). Checkbox continua sendo linha com marcacao; os demais tipos
   gravam o valor em `value`.
 - O upsert depende da constraint `UNIQUE (patient_id, item)`, que ja existia
-  desde `0001_init.sql`.
+  desde `20260831085900_init.sql`.
 - As funcoes antigas `listQuestionnaireItems` e `toggleQuestionnaireItem`
   seguem intactas, entao o odontograma nao quebrou.
 - Salvamento automatico: checkbox e escolha gravam no clique; texto grava no
@@ -77,14 +77,14 @@ durante a digitacao.
 - [`src/data/anamnese.ts`](../src/data/anamnese.ts): estrutura das perguntas.
 - [`src/components/AnamneseTab.tsx`](../src/components/AnamneseTab.tsx): render e autosave.
 - [`src/api/questionnaire.ts`](../src/api/questionnaire.ts): leitura e gravacao com valor.
-- [`supabase/migrations/0002_anamnese.sql`](../supabase/migrations/0002_anamnese.sql): coluna `value`.
+- [`supabase/migrations/20260909165417_anamnese_questionnaire_value.sql`](../supabase/migrations/20260909165417_anamnese_questionnaire_value.sql): coluna `value`.
 - `src/styles.css`, secao `/* ---------- ANAMNESE ---------- */`.
 - [`anamnese.html`](../anamnese.html): esboco original, mantido como referencia.
 
 ## Pendencias e riscos
 
 - O historico de migrations do Supabase esta incompleto: `list_migrations`
-  voltou vazio antes desta mudanca, ou seja, `0001_init.sql` foi aplicado a mao
+  voltou vazio antes desta mudanca, ou seja, `20260831085900_init.sql` foi aplicado a mao
   e o banco nao sabe que ele rodou. Recriar o banco do zero pelas migrations
   nao funcionaria ainda.
 - A aba Pediatria nao e escondida automaticamente para pacientes adultos; o

@@ -24,7 +24,7 @@ Formato de cada entrada:
 - Objetivo: remover funcoes orfas expostas via RPC, corrigir `search_path` das
   que ficam, e ligar a protecao contra senhas vazadas. Origem: advisors de
   seguranca do Supabase apontaram 15 avisos.
-- Arquivos envolvidos: `supabase/migrations/0005_limpeza_seguranca.sql`.
+- Arquivos envolvidos: `supabase/migrations/20260909182046_limpeza_seguranca_funcoes_orfas.sql`.
 - Validacao esperada: `get_advisors` sem os avisos de SECURITY DEFINER
   executavel por `anon`; triggers em uso preservados; `npm run build` aprovado.
 - Resultado: advisors de seguranca cairam de **15 avisos para 1**. Foram
@@ -49,7 +49,7 @@ Formato de cada entrada:
 - Objetivo: fazer o acesso depender do pertencimento a uma clinica, base do
   modelo de venda do software e correcao da exposicao dos prontuarios a
   qualquer conta criada pelo cadastro publico.
-- Arquivos envolvidos: `supabase/migrations/0006_multi_clinica.sql`,
+- Arquivos envolvidos: `supabase/migrations/20260909184029_multi_clinica_isolamento.sql`,
   `src/types/database.types.ts`.
 - Validacao esperada: um usuario autenticado sem clinica nao enxerga nada; um
   membro legitimo continua enxergando tudo; cadastro novo nasce em clinica
@@ -72,8 +72,8 @@ Formato de cada entrada:
 - Objetivo: corrigir efeito colateral da MISS-002. As cinco funcoes auxiliares
   ficaram no schema `public` e o PostgREST as expos como RPC, levando os
   advisors de 1 para 11 avisos.
-- Arquivos envolvidos: `supabase/migrations/0007_helpers_privados.sql`,
-  `supabase/migrations/0008_helpers_privados_storage.sql`.
+- Arquivos envolvidos: `supabase/migrations/20260909192705_helpers_em_schema_privado_parte1.sql`,
+  `supabase/migrations/20260909192718_helpers_em_schema_privado_parte2_storage.sql`.
 - Validacao esperada: advisors de volta a 1 aviso; isolamento preservado nas
   duas direcoes; `npm run build` aprovado.
 - Resultado: **confirmado.** Advisors voltaram a 1 aviso, restando apenas a
@@ -98,7 +98,7 @@ Formato de cada entrada:
   libera o endereco; quem se cadastrar com ele entra na clinica que convidou.
   Dispensa SMTP, Edge Function, token e tela de aceite, e reaproveita o trigger
   de cadastro ja existente. Avisar a pessoa e por fora.
-- Arquivos: `supabase/migrations/0009_convite_de_colegas.sql`,
+- Arquivos: `supabase/migrations/20260909194305_convite_de_colegas.sql`,
   `src/api/team.ts`, `src/components/AjustesView.tsx`,
   `src/types/database.types.ts`.
 - Resultado: **validado no banco real**, em transacao desfeita por excecao.
@@ -174,3 +174,29 @@ No codigo, ja commitados e no `main`: `src/api/team.ts`,
 
 ---
 
+## MISS-2026-09-10-006 — Sanear o historico de migrations
+
+- Criada por: Claude Code, a pedido do usuario
+- Responsavel: Claude Code
+- Status: concluida
+- Data: 2026-09-10
+- Objetivo: tornar o banco reproduzivel a partir dos arquivos, o que estava
+  quebrado em duas frentes: o schema inicial nao constava como aplicado, e os
+  nomes dos arquivos nao correspondiam ao que o banco registrava.
+- O que foi feito:
+  1. Os nove arquivos foram renomeados com `git mv` para a convencao do CLI,
+     `<timestamp>_<nome>.sql`, usando **as mesmas versoes ja gravadas** em
+     `schema_migrations`.
+  2. `0001_init.sql` virou `20260831085900_init.sql`, com o carimbo da data em
+     que foi escrito, e a linha correspondente foi inserida no registro. O SQL
+     **nao foi executado**: as tabelas ja existiam desde agosto.
+  3. As referencias aos nomes antigos nas memorias foram atualizadas.
+- Impacto em dados: **nenhum**. A unica escrita no banco foi um `insert` de uma
+  linha em `supabase_migrations.schema_migrations`, tabela de controle.
+- Validacao: as duas listas conferidas lado a lado, 9 arquivos e 9 registros,
+  identicas linha por linha. Contagens antes e depois: 2 pacientes,
+  2 tratamentos, 14 eventos de timeline, 2 respostas de questionario,
+  1 arquivo, 1 objeto no bucket, 1 clinica, 2 membros, 2 usuarios.
+- Proxima acao: com o historico integro, ja e possivel clonar o banco para um
+  ambiente de teste — o que permitiria a dentista testar sem tocar no banco
+  onde amanha havera paciente real.

@@ -69,11 +69,24 @@ Dois caminhos equivalentes:
 2. **Supabase CLI** — `npx supabase login`, `npx supabase link --project-ref
    cccukpzwbdaycdwmvdyp`, depois `npx supabase db push`.
 
-### Pendencia do historico de migrations
+### Historico de migrations
 
-`0001_init.sql` foi aplicado a mao, antes de existir controle de migrations, e
-o banco **nao sabe que ele rodou**. Recriar o banco do zero pelas migrations
-ainda nao funciona. Corrigir antes de tentar montar um ambiente de teste.
+Saneado em 2026-09-10. Os arquivos em `supabase/migrations/` seguem a
+convencao do CLI (`<timestamp>_<nome>.sql`) e **batem exatamente** com o que
+esta registrado em `supabase_migrations.schema_migrations` — 9 de cada lado,
+com os mesmos nomes.
+
+Antes disso os arquivos se chamavam `0001_init.sql`, `0002_anamnese.sql` e
+assim por diante, enquanto o banco registrava `20260909165417_...`. Um
+`supabase db push` acharia que nenhum arquivo local tinha sido aplicado e
+tentaria rodar todos de novo, falhando ao criar tabelas ja existentes.
+
+Nunca renomeie um arquivo de migration sem acertar a linha correspondente em
+`schema_migrations`: e essa correspondencia que mantem o banco reproduzivel.
+
+**Cuidado com `supabase db reset`:** ele apaga o banco e recria a partir das
+migrations. E o comando que destroi dados. `db push` e o registro de historico,
+nao.
 
 ## Publicando uma mudanca
 

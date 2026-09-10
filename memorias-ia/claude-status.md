@@ -14,7 +14,7 @@ apenas renderiza. Publicada em producao.
 
 - Arquivos: `src/data/anamnese.ts`, `src/components/AnamneseTab.tsx`,
   `src/components/PatientProfile.tsx`, `src/api/questionnaire.ts`,
-  `src/styles.css`, `supabase/migrations/0002_anamnese.sql`.
+  `src/styles.css`, `supabase/migrations/20260909165417_anamnese_questionnaire_value.sql`.
 - Validacao: `npm run build` aprovado; migration aplicada; upsert testado no
   banco real; bundle publicado em `https://fullarch.vercel.app` confere.
 - Detalhes em [`anamnese.md`](anamnese.md).
@@ -37,7 +37,7 @@ abrir. Detalhes em [`armazenamento-de-arquivos.md`](armazenamento-de-arquivos.md
 
 - Arquivos: `src/api/files.ts`, `src/components/FilesTab.tsx`,
   `src/types/database.types.ts`, `src/styles.css`,
-  `supabase/migrations/0003_storage_arquivos.sql`. Removido:
+  `supabase/migrations/20260909175526_arquivos_no_supabase_storage.sql`. Removido:
   `supabase/functions/drive-upload/index.ts`.
 - Validacao: `npm run build` aprovado, 98 modulos; bucket privado, tres
   politicas e coluna `storage_path` confirmados por consulta ao banco.
@@ -62,7 +62,7 @@ propria, fora de qualquer migration. Por serem SECURITY DEFINER no schema
 Nenhuma era usada pelo app, e as tabelas que consultavam (`usuarios`,
 `perfis`) nao existem em schema algum.
 
-Todas removidas em `supabase/migrations/0005_limpeza_seguranca.sql`. Os
+Todas removidas em `supabase/migrations/20260909182046_limpeza_seguranca_funcoes_orfas.sql`. Os
 advisors de seguranca cairam de 15 avisos para 1.
 
 ### Isolamento por clinica (MISS-2026-09-09-002)
@@ -102,8 +102,7 @@ mas falta a rota em `App.tsx`, que e sua frente. Instrucoes exatas em
   apague qualquer arquivo. Suficiente para uma clinica; precisa filtrar por
   prefixo de caminho antes de qualquer abertura multi-clinica.
 - Nao ha limite de tamanho nem validacao de tipo no upload.
-- O historico de migrations do banco esta incompleto: `0001_init.sql` foi
-  aplicado a mao e nao consta como executado.
+- ~~Historico de migrations incompleto.~~ Resolvido na MISS-006.
 - **Com o usuario:** ligar a protecao contra senhas vazadas em
   Authentication > Sign In / Providers > Email. E o unico aviso restante.
   (O caminho correto nao e Database > Policies, nem Attack Protection: naquela
@@ -130,7 +129,7 @@ Com a frente de equipe pausada, as missoes disponiveis sao:
    imagem foi enviada e esta consistente entre bucket e `files`. Falta ainda
    exercitar campos de texto e periograma da anamnese, e upload de documento,
    exclusao e rejeicao de tipo proibido.
-2. **Sanear o historico de migrations**: `0001_init.sql` continua sem registro,
+2. **Sanear o historico de migrations**: `20260831085900_init.sql` continua sem registro,
    entao o banco nao pode ser recriado do zero nem clonado para um ambiente de
    teste.
 3. **Terminar a anamnese**: esconder Pediatria para pacientes adultos e trazer

@@ -57,7 +57,7 @@ sensivel de saude e o ponto principal a preservar em qualquer mudanca futura.
 - [`src/api/files.ts`](../src/api/files.ts): upload, URLs assinadas e exclusao.
 - [`src/components/FilesTab.tsx`](../src/components/FilesTab.tsx): miniaturas e
   abertura por link assinado gerado no clique.
-- [`supabase/migrations/0003_storage_arquivos.sql`](../supabase/migrations/0003_storage_arquivos.sql)
+- [`supabase/migrations/20260909175526_arquivos_no_supabase_storage.sql`](../supabase/migrations/20260909175526_arquivos_no_supabase_storage.sql)
 - Commit `42129c2` preserva o fluxo do Drive no historico, caso alguem precise
   consultar como era.
 
