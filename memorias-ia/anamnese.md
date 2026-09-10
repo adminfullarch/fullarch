@@ -31,6 +31,31 @@ mini questionario do odontograma, que grava na mesma tabela.
 Campos de detalhe usam `showIf` e so aparecem quando a pergunta que os motiva
 e respondida, em vez de ficarem sempre visiveis como no esboco.
 
+## Salvar e editar, em vez de autosave
+
+A pedido do usuario em 2026-09-09, a aba deixou de gravar a cada clique e
+passou a ter **rascunho com botao Salvar**. O dentista preenche a vontade e,
+ao terminar, clica em Salvar: os campos ficam **protegidos** e so voltam a ser
+editaveis pelo botao Editar. Evita alterar um prontuario fechado por um clique
+sem querer.
+
+Ganho colateral: antes cada caixa marcada era uma requisicao ao Supabase, em um
+formulario de quase 200 campos. Agora e uma gravacao por sessao de
+preenchimento, enviando apenas os campos que mudaram.
+
+Uma anamnese em branco abre destravada, pronta para preencher; uma que ja tem
+respostas abre protegida.
+
+**Risco assumido:** sem autosave, fechar a aba no meio do preenchimento perde o
+que nao foi salvo. Ha um aviso do navegador (`beforeunload`) quando existem
+alteracoes pendentes, e o cabecalho mostra quantas sao. Se isso se mostrar
+insuficiente na pratica, o proximo passo seria guardar o rascunho em
+`localStorage`.
+
+O texto digitado continua subindo para o rascunho no blur, e nao a cada tecla:
+com quase 200 campos, propagar por tecla faria a aba inteira renderizar de novo
+durante a digitacao.
+
 ## Fatos confirmados
 
 - 9 especialidades: Medico, Periodontia, Endodontia, Cirurgia, DTM,

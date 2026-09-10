@@ -15,12 +15,43 @@ const MARCADO = 'sim'
 
 type Respostas = Record<string, string>
 
+function IconeSalvar() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+      <path d="M17 21v-8H7v8M7 3v5h8" />
+    </svg>
+  )
+}
+
+function IconeEditar() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  )
+}
+
+function IconeCadeado() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  )
+}
+
 export function AnamneseTab({ patientId }: { patientId: string }) {
-  const [respostas, setRespostas] = useState<Respostas>({})
+  /** O que está gravado no banco. */
+  const [salvas, setSalvas] = useState<Respostas>({})
+  /** O que está na tela, ainda podendo divergir do banco. */
+  const [rascunho, setRascunho] = useState<Respostas>({})
+  const [bloqueado, setBloqueado] = useState(true)
   const [grupo, setGrupo] = useState(ANAMNESE_GROUPS[0].id)
   const [loading, setLoading] = useState(true)
+  const [salvando, setSalvando] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [salvando, setSalvando] = useState(0)
 
   useEffect(() => {
     let ativo = true
@@ -31,7 +62,11 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
         if (!ativo) return
         const mapa: Respostas = {}
         for (const r of rows) mapa[r.item] = r.value ?? MARCADO
-        setRespostas(mapa)
+        setSalvas(mapa)
+        setRascunho(mapa)
+        // Anamnese em branco já abre pronta para preencher; uma que já existe
+        // abre protegida, para não ser alterada por um clique sem querer.
+        setBloqueado(Object.keys(mapa).length > 0)
       })
       .catch((err) => {
         if (ativo) setError(err instanceof Error ? err.message : 'Erro ao carregar a anamnese.')
@@ -44,22 +79,56 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
     }
   }, [patientId])
 
-  async function salvar(id: string, valor: string) {
-    setRespostas((prev) => {
+  /** Campos que mudaram desde a última gravação. */
+  const pendentes = useMemo(() => {
+    const ids = new Set([...Object.keys(salvas), ...Object.keys(rascunho)])
+    return [...ids].filter((id) => (salvas[id] ?? '') !== (rascunho[id] ?? ''))
+  }, [salvas, rascunho])
+
+  // Sem autosave, fechar a aba no meio do preenchimento perderia tudo.
+  useEffect(() => {
+    if (pendentes.length === 0) return
+    function avisar(e: BeforeUnloadEvent) {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', avisar)
+    return () => window.removeEventListener('beforeunload', avisar)
+  }, [pendentes.length])
+
+  function alterar(id: string, valor: string) {
+    setRascunho((prev) => {
       const proximo = { ...prev }
       if (valor === '') delete proximo[id]
       else proximo[id] = valor
       return proximo
     })
-    setSalvando((n) => n + 1)
-    try {
-      await setQuestionnaireValue(patientId, id, valor === '' ? null : valor)
-      setError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar a resposta.')
-    } finally {
-      setSalvando((n) => n - 1)
+  }
+
+  async function salvar() {
+    if (pendentes.length === 0) {
+      setBloqueado(true)
+      return
     }
+    setSalvando(true)
+    setError(null)
+    try {
+      await Promise.all(
+        pendentes.map((id) => setQuestionnaireValue(patientId, id, rascunho[id] ?? null))
+      )
+      setSalvas(rascunho)
+      setBloqueado(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar. Nada foi perdido — tente de novo.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  function descartar() {
+    if (pendentes.length > 0 && !window.confirm('Descartar as alterações não salvas?')) return
+    setRascunho(salvas)
+    setBloqueado(true)
   }
 
   const grupoAtivo = ANAMNESE_GROUPS.find((g) => g.id === grupo) ?? ANAMNESE_GROUPS[0]
@@ -73,10 +142,10 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
         for (const f of s.fields) ids.add(f.id)
         if (s.kind === 'periograma') for (const sx of SEXTANTES) ids.add(sx.id)
       }
-      contagem[g.id] = Object.keys(respostas).filter((id) => ids.has(id)).length
+      contagem[g.id] = Object.keys(rascunho).filter((id) => ids.has(id)).length
     }
     return contagem
-  }, [respostas])
+  }, [rascunho])
 
   if (loading) {
     return (
@@ -87,17 +156,47 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
   }
 
   return (
-    <div className="anamnese">
+    <div className={`anamnese ${bloqueado ? 'bloqueada' : ''}`}>
       <div className="anamnese-top">
-        <div className="section-label">Anamnese odontológica</div>
-        <div className="anamnese-status">
-          {salvando > 0 ? 'Salvando…' : error ? <span className="anamnese-error">{error}</span> : 'Salvo automaticamente'}
+        <div className="section-label" style={{ marginBottom: 0 }}>
+          Anamnese odontológica
+        </div>
+        <div className="anamnese-acoes">
+          {bloqueado ? (
+            <>
+              <span className="anamnese-status">
+                <IconeCadeado />
+                Protegida
+              </span>
+              <button className="btn btn-solid" onClick={() => setBloqueado(false)}>
+                <IconeEditar />
+                Editar
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="anamnese-status">
+                {pendentes.length === 0
+                  ? 'Sem alterações'
+                  : `${pendentes.length} ${pendentes.length === 1 ? 'alteração' : 'alterações'} não salva${pendentes.length === 1 ? '' : 's'}`}
+              </span>
+              <button className="btn btn-ghost" onClick={descartar} disabled={salvando}>
+                Cancelar
+              </button>
+              <button className="btn btn-solid" onClick={salvar} disabled={salvando}>
+                <IconeSalvar />
+                {salvando ? 'Salvando…' : 'Salvar'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
+      {error && <p className="anamnese-erro">{error}</p>}
+
       <div className="anamnese-dados">
         {DADOS_CLINICOS.map((f) => (
-          <Campo key={f.id} field={f} value={respostas[f.id] ?? ''} onSave={salvar} />
+          <Campo key={f.id} field={f} value={rascunho[f.id] ?? ''} onChange={alterar} bloqueado={bloqueado} />
         ))}
       </div>
 
@@ -117,7 +216,7 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
       {grupoAtivo.intro && <p className="anamnese-intro">{grupoAtivo.intro}</p>}
 
       {grupoAtivo.sections.map((s) => (
-        <Secao key={s.id} section={s} respostas={respostas} onSave={salvar} />
+        <Secao key={s.id} section={s} respostas={rascunho} onChange={alterar} bloqueado={bloqueado} />
       ))}
     </div>
   )
@@ -126,11 +225,13 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
 function Secao({
   section,
   respostas,
-  onSave,
+  onChange,
+  bloqueado,
 }: {
   section: AnamneseSection
   respostas: Respostas
-  onSave: (id: string, valor: string) => void
+  onChange: (id: string, valor: string) => void
+  bloqueado: boolean
 }) {
   const visiveis = section.fields.filter((f) => campoVisivel(f, respostas))
   return (
@@ -154,8 +255,9 @@ function Secao({
                   min="0"
                   max="15"
                   placeholder="—"
+                  disabled={bloqueado}
                   value={respostas[sx.id] ?? ''}
-                  onSave={(v) => onSave(sx.id, v)}
+                  onCommit={(v) => onChange(sx.id, v)}
                 />
                 <span className="sextante-unidade">mm</span>
               </div>
@@ -166,7 +268,7 @@ function Secao({
 
       <div className="anamnese-grid">
         {visiveis.map((f) => (
-          <Campo key={f.id} field={f} value={respostas[f.id] ?? ''} onSave={onSave} />
+          <Campo key={f.id} field={f} value={respostas[f.id] ?? ''} onChange={onChange} bloqueado={bloqueado} />
         ))}
       </div>
     </div>
@@ -184,11 +286,13 @@ function campoVisivel(field: AnamneseField, respostas: Respostas) {
 function Campo({
   field,
   value,
-  onSave,
+  onChange,
+  bloqueado,
 }: {
   field: AnamneseField
   value: string
-  onSave: (id: string, valor: string) => void
+  onChange: (id: string, valor: string) => void
+  bloqueado: boolean
 }) {
   const classe = `anamnese-campo ${field.wide ? 'wide' : ''} ${field.type === 'check' ? 'is-check' : ''}`
 
@@ -198,7 +302,8 @@ function Campo({
         <input
           type="checkbox"
           checked={value !== ''}
-          onChange={(e) => onSave(field.id, e.target.checked ? MARCADO : '')}
+          disabled={bloqueado}
+          onChange={(e) => onChange(field.id, e.target.checked ? MARCADO : '')}
         />
         <span>{field.label}</span>
       </label>
@@ -215,7 +320,8 @@ function Campo({
               key={op}
               type="button"
               className={`anamnese-opcao ${value === op ? 'selected' : ''}`}
-              onClick={() => onSave(field.id, value === op ? '' : op)}
+              disabled={bloqueado}
+              onClick={() => onChange(field.id, value === op ? '' : op)}
             >
               {op}
             </button>
@@ -229,7 +335,12 @@ function Campo({
     return (
       <div className={classe}>
         <span className="anamnese-label">{field.label}</span>
-        <ValorTextarea placeholder={field.placeholder} value={value} onSave={(v) => onSave(field.id, v)} />
+        <ValorTextarea
+          placeholder={field.placeholder}
+          value={value}
+          disabled={bloqueado}
+          onCommit={(v) => onChange(field.id, v)}
+        />
       </div>
     )
   }
@@ -241,28 +352,30 @@ function Campo({
         type={field.type}
         placeholder={field.placeholder}
         value={value}
-        onSave={(v) => onSave(field.id, v)}
+        disabled={bloqueado}
+        onCommit={(v) => onChange(field.id, v)}
       />
     </div>
   )
 }
 
 /**
- * Campo de texto que mantém o que está sendo digitado em estado local e só
- * grava ao sair do campo — evita uma chamada ao Supabase por tecla.
+ * O texto digitado fica em estado local e só sobe para o rascunho ao sair do
+ * campo. São quase 200 campos na tela: propagar a cada tecla faria a aba
+ * inteira renderizar de novo enquanto o dentista digita.
  */
 function ValorInput({
   value,
-  onSave,
+  onCommit,
   ...props
-}: { value: string; onSave: (valor: string) => void } & React.InputHTMLAttributes<HTMLInputElement>) {
-  const [rascunho, setRascunho] = useState(value)
-  const ultimoSalvo = useRef(value)
+}: { value: string; onCommit: (valor: string) => void } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const [local, setLocal] = useState(value)
+  const ultimo = useRef(value)
 
   useEffect(() => {
-    if (value !== ultimoSalvo.current) {
-      ultimoSalvo.current = value
-      setRascunho(value)
+    if (value !== ultimo.current) {
+      ultimo.current = value
+      setLocal(value)
     }
   }, [value])
 
@@ -270,13 +383,13 @@ function ValorInput({
     <input
       {...props}
       className="field-input"
-      value={rascunho}
-      onChange={(e) => setRascunho(e.target.value)}
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
       onBlur={() => {
-        const limpo = rascunho.trim()
-        if (limpo === ultimoSalvo.current) return
-        ultimoSalvo.current = limpo
-        onSave(limpo)
+        const limpo = local.trim()
+        if (limpo === ultimo.current) return
+        ultimo.current = limpo
+        onCommit(limpo)
       }}
     />
   )
@@ -284,20 +397,22 @@ function ValorInput({
 
 function ValorTextarea({
   value,
-  onSave,
+  onCommit,
   placeholder,
+  disabled,
 }: {
   value: string
-  onSave: (valor: string) => void
+  onCommit: (valor: string) => void
   placeholder?: string
+  disabled?: boolean
 }) {
-  const [rascunho, setRascunho] = useState(value)
-  const ultimoSalvo = useRef(value)
+  const [local, setLocal] = useState(value)
+  const ultimo = useRef(value)
 
   useEffect(() => {
-    if (value !== ultimoSalvo.current) {
-      ultimoSalvo.current = value
-      setRascunho(value)
+    if (value !== ultimo.current) {
+      ultimo.current = value
+      setLocal(value)
     }
   }, [value])
 
@@ -305,13 +420,14 @@ function ValorTextarea({
     <textarea
       className="field-textarea"
       placeholder={placeholder}
-      value={rascunho}
-      onChange={(e) => setRascunho(e.target.value)}
+      disabled={disabled}
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
       onBlur={() => {
-        const limpo = rascunho.trim()
-        if (limpo === ultimoSalvo.current) return
-        ultimoSalvo.current = limpo
-        onSave(limpo)
+        const limpo = local.trim()
+        if (limpo === ultimo.current) return
+        ultimo.current = limpo
+        onCommit(limpo)
       }}
     />
   )
