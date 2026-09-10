@@ -23,7 +23,17 @@ export function PatientList({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return patients
-    return patients.filter((p) => p.name.toLowerCase().includes(q))
+
+    const normalize = (value: string | number | null | undefined) =>
+      String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+
+    return patients.filter((p) => {
+      const haystack = [p.name, p.phone, p.plan, p.age ? String(p.age) : '']
+      return haystack.some((value) => normalize(value).includes(normalize(q)))
+    })
   }, [patients, query])
 
   return (
@@ -32,7 +42,7 @@ export function PatientList({
         <div className="search-box">
           <input
             type="text"
-            placeholder="Buscar paciente…"
+            placeholder="Buscar por nome, telefone, plano ou idade…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -92,6 +102,21 @@ function initials(name: string) {
     .join('')
 }
 
+function formatPhone(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (!digits) return ''
+
+  const ddd = digits.slice(0, 2)
+  const rest = digits.slice(2)
+
+  if (digits.length <= 2) return `(${digits}`
+  if (digits.length <= 3) return `(${ddd}) ${rest}`
+  if (digits.length <= 7) return `(${ddd}) ${rest.slice(0, 1)} ${rest.slice(1)}`
+  if (digits.length <= 11) return `(${ddd}) ${rest.slice(0, 1)} ${rest.slice(1, 5)}-${rest.slice(5)}`
+
+  return `(${ddd}) ${rest.slice(0, 1)} ${rest.slice(1, 5)}-${rest.slice(5, 9)}`
+}
+
 function NewPatientModal({
   onClose,
   onCreated,
@@ -115,7 +140,7 @@ function NewPatientModal({
       const patient = await createPatient({
         name: name.trim(),
         age: age ? Number(age) : null,
-        phone: phone.trim() || null,
+        phone: phone.replace(/\D/g, '') || null,
         plan: plan.trim() || undefined,
         reason: reason.trim() || undefined,
       })
@@ -146,7 +171,12 @@ function NewPatientModal({
           </div>
           <div>
             <label className="field-label">Telefone</label>
-            <input className="field-input" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <input
+              className="field-input"
+              value={phone}
+              onChange={(e) => setPhone(formatPhone(e.target.value))}
+              placeholder="(41) 9 9999-9999"
+            />
           </div>
         </div>
         <label className="field-label">Convênio / Plano</label>

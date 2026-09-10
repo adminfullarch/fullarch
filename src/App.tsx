@@ -8,6 +8,9 @@ import { PatientList } from './components/PatientList'
 import { PatientProfile } from './components/PatientProfile'
 import { AgendaTab } from './components/AgendaTab'
 import { DashboardTab } from './components/DashboardTab'
+import { AjustesView } from './components/AjustesView'
+import { CrmTab } from './components/CrmTab'
+import { FinanceTab } from './components/FinanceTab'
 
 export default function App() {
   const { session, loading, signOut } = useAuth()
@@ -78,7 +81,11 @@ export default function App() {
         />
       )}
 
-      {view !== 'pacientes' && view !== 'agenda' && view !== 'dashboard' && (
+      {view === 'ajustes' && <AjustesView />}
+      {view === 'crm' && <CrmTab />}
+      {view === 'financeiro' && <FinanceTab />}
+
+      {view !== 'pacientes' && view !== 'agenda' && view !== 'dashboard' && view !== 'ajustes' && view !== 'crm' && view !== 'financeiro' && (
         <div className="main module-main visible">
           <div className="module-header">
             <div className="module-title">{view}</div>
