@@ -116,10 +116,22 @@ para validar mudancas**. Recomendado apagar o projeto duplicado.
   (`index-DIlbquyV.js`) tem o mesmo hash do build local e contem a aba
   Anamnese.
 
-## Nao validado ainda
+## Validado em producao
 
-- **Nenhuma resposta real foi gravada.** Em 2026-09-09 a consulta
-  `select count(*) from questionnaire_responses where item like 'anamnese:%'`
-  retornou zero. O caminho de escrita foi provado em SQL direto, mas o fluxo
-  completo pela interface em producao ainda nao foi exercitado por um usuario.
+Em 2026-09-10 uma dentista usou a aba em producao e o usuario confirmou que
+esta funcionando corretamente. Evidencia no banco: a resposta
+`anamnese:med.cardio.hipertensao` = `sim` gravada as 00:44 UTC, pelo fluxo de
+preencher, clicar em Salvar e a tela ficar protegida.
+
+A dentista tambem elogiou a distribuicao dos dados por especialidade, e pediu
+um campo livre para descrever quais exames laboratoriais foram feitos — o que
+originou `anamnese:av.lab.quais`.
+
+## Ainda nao exercitado
+
+- So um checkbox foi gravado. **Campos de texto, escolha e o periograma ainda
+  nao passaram pela interface em producao** — em 2026-09-10 nao havia nenhuma
+  resposta com valor diferente de `sim`. O caminho de escrita desses tipos foi
+  provado em SQL, mas nao pela tela.
+- O botao Editar, que destrava uma anamnese ja salva, nao foi observado em uso.
 - Comportamento em telas estreitas nao foi testado em dispositivo real.

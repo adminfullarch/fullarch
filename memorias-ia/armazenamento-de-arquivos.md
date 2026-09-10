@@ -63,8 +63,14 @@ sensivel de saude e o ponto principal a preservar em qualquer mudanca futura.
 
 ## Pendencias e riscos
 
-- **Nenhum upload real foi feito ainda.** O build passa e o banco esta
-  configurado, mas o fluxo completo pela interface nao foi exercitado.
+- ~~Nenhum upload real foi feito ainda.~~ **Validado em producao.** Em
+  2026-09-09, as 20:40 UTC, uma imagem JPEG vinda de iPhone foi enviada pela
+  interface. O caminho seguiu o formato esperado
+  (`{patientId}/image/{timestamp}_{nome}`), o objeto existe no bucket e o
+  metadado em `files` aponta para ele — sem orfao dos dois lados. O filtro de
+  upload deixou passar o JPEG, como esperado.
+- **Documentos ainda nao foram exercitados**, nem a exclusao pela interface,
+  nem a rejeicao de um tipo proibido.
 - As politicas liberam qualquer usuario autenticado a ler e apagar qualquer
   arquivo do bucket. Hoje o sistema e single-tenant e todos sao da mesma
   clinica, entao o impacto e limitado. Antes de abrir para varias clinicas, as

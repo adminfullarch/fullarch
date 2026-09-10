@@ -125,9 +125,11 @@ commitou, entao a tela existe no codigo e nao aparece no site.
 
 Com a frente de equipe pausada, as missoes disponiveis sao:
 
-1. **Validar em producao** anamnese e upload, que seguem com zero uso real —
-   0 respostas de anamnese, 0 arquivos, 0 objetos no bucket. Depende do
-   usuario no navegador.
+1. ~~Validar em producao anamnese e upload.~~ **Feito em 2026-09-10.** A
+   anamnese gravou pela interface e o usuario confirmou o funcionamento; uma
+   imagem foi enviada e esta consistente entre bucket e `files`. Falta ainda
+   exercitar campos de texto e periograma da anamnese, e upload de documento,
+   exclusao e rejeicao de tipo proibido.
 2. **Sanear o historico de migrations**: `0001_init.sql` continua sem registro,
    entao o banco nao pode ser recriado do zero nem clonado para um ambiente de
    teste.
