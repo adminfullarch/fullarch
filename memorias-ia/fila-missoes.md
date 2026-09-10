@@ -200,3 +200,26 @@ No codigo, ja commitados e no `main`: `src/api/team.ts`,
 - Proxima acao: com o historico integro, ja e possivel clonar o banco para um
   ambiente de teste — o que permitiria a dentista testar sem tocar no banco
   onde amanha havera paciente real.
+
+---
+
+## MISS-2026-09-10-008 — Definir o proposito da tela de CRM
+
+- Criada por: Claude Code, a partir de observacao do usuario
+- Responsavel: em aberto
+- Status: **em espera — aguardando decisao do produto**
+- Data: 2026-09-10
+- Problema: ligada aos dados reais, a tela de CRM ficou muito parecida com a de
+  Inicio. Das quatro metricas do topo, tres tem equivalente direto no Inicio
+  (pacientes, consultas hoje, pendencias), e os dois paineis repetem, com outro
+  recorte, o que o Inicio ja mostra. Enquanto os numeros eram de mockup a
+  duplicidade nao aparecia; com dados reais, aparece.
+- Causa: a tela veio de um layout, sem uma pergunta definida para responder.
+- Direcao provavel: o Inicio responde "como esta hoje". Para nao repeti-lo, o
+  CRM precisa responder algo em outra escala de tempo — retencao e conversao,
+  em semanas e meses. Duas leituras possiveis, uma delas viavel sem mexer no
+  banco (pacientes sem consulta ha meses, orcamentos parados, aprovados sem
+  agendamento) e outra que exigiria uma tabela de leads.
+- Decisao: **o usuario ainda nao definiu o que quer nessa tela.** Nao construir
+  nada aqui por conta propria; a tela atual fica como esta ate haver uma
+  definicao vinda da rotina da clinica.
