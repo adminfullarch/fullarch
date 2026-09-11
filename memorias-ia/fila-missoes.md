@@ -223,3 +223,34 @@ No codigo, ja commitados e no `main`: `src/api/team.ts`,
 - Decisao: **o usuario ainda nao definiu o que quer nessa tela.** Nao construir
   nada aqui por conta propria; a tela atual fica como esta ate haver uma
   definicao vinda da rotina da clinica.
+
+---
+
+## MISS-2026-09-11-009 — Recuperacao de senha
+
+- Criada por: Claude Code, a pedido do usuario
+- Responsavel: Claude Code
+- Status: implementada — **falta configurar o envio de e-mail no Supabase**
+- Data: 2026-09-11
+- Problema: a tela de login oferecia apenas entrar ou criar usuario. Quem
+  esquecesse a senha nao tinha saida senao criar outra conta — que, com o
+  isolamento por clinica, nasceria numa clinica vazia, sem os pacientes da
+  conta antiga.
+- O que foi feito: fluxo padrao do Auth do Supabase, em `7371863`.
+  - `resetPasswordForEmail` no link "Esqueci minha senha" da tela de login.
+  - `RedefinirSenha.tsx` recebe a pessoa de volta e chama `updateUser`.
+  - `lib/authRecovery.ts` le a marca `type=recovery` do fragmento da URL **no
+    carregamento do modulo**, antes de o cliente do Supabase consumir e apagar
+    esse fragmento. Sem isso o app veria so uma sessao valida e abriria direto
+    no sistema, sem nunca oferecer a troca.
+  - `App.tsx` checa a recuperacao **antes** da sessao, pelo mesmo motivo.
+- Decisao de seguranca: a confirmacao do envio e a mesma para e-mail cadastrado
+  ou nao. Dizer "esse e-mail nao existe" entregaria a lista de quem tem acesso
+  a clinica a quem estivesse adivinhando.
+- Pendencia que impede o uso real: o Supabase so envia e-mail pelo servico
+  embutido, limitado a poucas mensagens por hora e destinado a teste. Antes de
+  a clinica usar isso de verdade, configurar SMTP proprio em
+  Authentication > Emails > SMTP Settings.
+- A verificar tambem: `Authentication > URL Configuration` precisa ter
+  `https://fullarch.vercel.app` como Site URL e nos Redirect URLs, senao o link
+  do e-mail leva para o lugar errado.
