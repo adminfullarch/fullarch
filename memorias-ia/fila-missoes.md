@@ -344,3 +344,37 @@ No codigo, ja commitados e no `main`: `src/api/team.ts`,
 - Continua aberto: exercitar pelo navegador upload, exclusao, tipo proibido,
   convite de colega e recuperacao de senha (item 7 da MISS-010) — validado no
   banco, nunca por uma pessoa.
+
+---
+
+## MISS-2026-09-11-012 — Arquivos orfaos no Storage ao excluir paciente
+
+- Criada por: Claude Code, a pedido do usuario
+- Responsavel: **GitHub Copilot**
+- Status: aguardando
+- Data: 2026-09-11
+- Prioridade: media
+- Problema: `deletePatient` apaga a linha do paciente e o banco cascateia as
+  tabelas filhas, inclusive `patient_files`. Mas os **objetos no bucket
+  `patient-files` continuam la**, sem nenhuma linha que os referencie. Ninguem
+  os acessa pela interface, porem ocupam espaco e, do ponto de vista da LGPD,
+  "excluir o paciente" deveria levar os arquivos junto.
+- O que fazer, em `src/api/patients.ts` e `src/api/files.ts`:
+  1. Antes do `delete` do paciente, listar os `storage_path` de
+     `patient_files` daquele paciente.
+  2. Remover esses objetos do bucket com `supabase.storage.from(...).remove()`.
+  3. So entao apagar o paciente. Se a remocao dos objetos falhar, **nao apagar
+     o paciente** — e melhor manter tudo consistente e mostrar o erro do que
+     perder o cadastro e deixar os arquivos para tras.
+  4. A ordem importa: apagar o paciente primeiro faz o cascade levar as linhas
+     de `patient_files`, e ai se perde o `storage_path` — os arquivos ficam
+     inalcancaveis para sempre.
+- Validacao esperada: cadastrar um paciente de teste, subir uma imagem e um
+  documento, excluir o paciente e confirmar pelo painel do Supabase que o
+  prefixo `{patientId}/` do bucket ficou vazio. `npm run build` aprovado.
+- **Arquivos que o Claude Code esta editando agora, nao mexer:**
+  `src/components/AnamneseTab.tsx`, `src/components/PatientProfile.tsx`,
+  `src/data/anamnese.ts`, `src/styles.css`.
+- Sugestao de trabalho paralelo, se esta missao terminar antes: revisar a
+  landing page e o comportamento em tela de celular das telas novas de CRM e
+  Financeiro, que nunca foram vistas em telefone.
