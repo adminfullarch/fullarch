@@ -104,7 +104,9 @@ export function PatientProfile({ patientId, onDeleted }: { patientId: string; on
             onGoToTooth={() => setTab('odontograma')}
           />
         )}
-        {tab === 'anamnese' && <AnamneseTab patientId={patient.id} />}
+        {tab === 'anamnese' && (
+          <AnamneseTab patientId={patient.id} patientName={patient.name} patientAge={patient.age} />
+        )}
         {tab === 'odontograma' && <OdontogramaTab patientId={patient.id} onChanged={reload} />}
         {tab === 'imagens' && (
           <FilesTab patientId={patient.id} patientName={patient.name} kind="image" onChanged={reload} />

@@ -423,6 +423,7 @@
     transition: background .12s, border-color .12s, color .12s;
     touch-action:manipulation;
   }
+  .anamnese-nav-btn.ghost{ border-style:dashed; color: var(--ink-faint); }
   .anamnese-nav-btn:hover{ border-color: var(--ink-faint); color: var(--ink); }
   .anamnese-nav-btn.active{ background: var(--accent); border-color: var(--accent); color:#fff; font-weight:600; }
   .anamnese-count{
@@ -640,6 +641,55 @@
   .search-result-item .result-patient { font-size:10.5px; color: var(--ink-faint); }
   .search-empty {
     text-align:center; padding:32px 16px; color: var(--ink-faint); font-size:13px;
+  }
+
+
+  /* ---------- ANAMNESE EM PAPEL ---------- */
+  /* Fora da impressao este bloco nao existe para o leitor: some da tela e do
+     fluxo do documento, mas continua no DOM para o navegador imprimir. */
+  .anamnese-impressao{ display:none; }
+
+  @media print{
+    /* Esconder tudo por visibilidade, e nao por display, preserva a arvore que
+       o React controla — mexer em display aqui brigaria com o app. O bloco de
+       impressao volta a ser visivel e sobe para o topo da folha. */
+    body *{ visibility:hidden !important; }
+    .anamnese-impressao, .anamnese-impressao *{ visibility:visible !important; }
+    .anamnese-impressao{
+      display:block !important;
+      position:absolute; left:0; top:0; width:100%;
+      padding:0; margin:0; color:#000; background:#fff;
+      font-family: var(--font-sans); font-size:11pt; line-height:1.45;
+    }
+
+    .imp-cabecalho{ border-bottom:1.5pt solid #000; padding-bottom:10pt; margin-bottom:16pt; }
+    .imp-marca{ font-family: var(--font-serif); font-size:15pt; font-weight:600; letter-spacing:.02em; }
+    .imp-cabecalho h1{ font-family: var(--font-serif); font-size:17pt; font-weight:600; margin:6pt 0 4pt; }
+    .imp-paciente{ font-size:11pt; margin:0; }
+    .imp-aviso{ font-size:9.5pt; font-style:italic; margin:6pt 0 0; }
+
+    /* Uma especialidade nao deve comecar no pe da folha e continuar na outra. */
+    .imp-secao{ margin-bottom:14pt; break-inside:avoid; page-break-inside:avoid; }
+    .imp-secao h2{
+      font-family: var(--font-serif); font-size:12.5pt; font-weight:600;
+      margin:0 0 6pt; padding-bottom:3pt; border-bottom:.5pt solid #999;
+      break-after:avoid; page-break-after:avoid;
+    }
+    .imp-secao dl{ margin:0; }
+    .imp-linha{
+      display:flex; gap:10pt; align-items:baseline;
+      padding:2.5pt 0; border-bottom:.25pt dotted #bbb;
+      break-inside:avoid; page-break-inside:avoid;
+    }
+    .imp-linha dt{ flex:1 1 62%; margin:0; }
+    .imp-linha dd{ flex:0 0 34%; margin:0; font-weight:600; }
+    .imp-vazio{ font-style:italic; }
+
+    .imp-assinatura{ margin-top:34pt; break-inside:avoid; page-break-inside:avoid; }
+    .imp-linha-assinatura{ width:62%; border-top:.75pt solid #000; margin-bottom:4pt; }
+    .imp-assinatura span{ font-size:9.5pt; }
+
+    @page{ margin:16mm 14mm; }
   }
 
   /* ---------- MODULE VIEWS ---------- */

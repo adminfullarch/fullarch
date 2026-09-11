@@ -38,6 +38,13 @@ export type AnamneseGroup = {
   id: string
   label: string
   intro?: string
+  /**
+   * Idade acima da qual o grupo deixa de ser oferecido. Serve para não
+   * empurrar as perguntas de odontopediatria ao dentista que atende um
+   * adulto. Não apaga nada: um grupo escondido que já tenha respostas
+   * continua aparecendo, e a aba oferece mostrar os escondidos.
+   */
+  idadeMaxima?: number
   sections: AnamneseSection[]
 }
 
@@ -466,6 +473,7 @@ export const ANAMNESE_GROUPS: AnamneseGroup[] = [
   {
     id: 'pediatria',
     label: 'Pediatria',
+    idadeMaxima: 12,
     intro: 'Preencher apenas para pacientes com menos de 12 anos ou em acompanhamento infantil.',
     sections: [
       {

@@ -4,6 +4,7 @@ import {
   DADOS_CLINICOS,
   SEXTANTES,
   type AnamneseField,
+  type AnamneseGroup,
   type AnamneseSection,
 } from '../data/anamnese'
 import { listQuestionnaireResponses, setQuestionnaireValue } from '../api/questionnaire'
@@ -42,7 +43,25 @@ function IconeCadeado() {
   )
 }
 
-export function AnamneseTab({ patientId }: { patientId: string }) {
+function IconeImprimir() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9V3h12v6" />
+      <path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" />
+      <rect x="6" y="14" width="12" height="7" rx="1" />
+    </svg>
+  )
+}
+
+export function AnamneseTab({
+  patientId,
+  patientName,
+  patientAge,
+}: {
+  patientId: string
+  patientName: string
+  patientAge: number | null
+}) {
   /** O que está gravado no banco. */
   const [salvas, setSalvas] = useState<Respostas>({})
   /** O que está na tela, ainda podendo divergir do banco. */
@@ -52,6 +71,7 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
   const [loading, setLoading] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mostrarTodos, setMostrarTodos] = useState(false)
 
   useEffect(() => {
     let ativo = true
@@ -131,7 +151,23 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
     setBloqueado(true)
   }
 
-  const grupoAtivo = ANAMNESE_GROUPS.find((g) => g.id === grupo) ?? ANAMNESE_GROUPS[0]
+  /**
+   * Grupos oferecidos para este paciente. Um grupo com limite de idade some
+   * para quem já passou dele — mas nunca se a anamnese já tiver resposta ali,
+   * senão o dentista perderia de vista o que ele mesmo preencheu.
+   */
+  const gruposVisiveis = useMemo(() => {
+    if (mostrarTodos) return ANAMNESE_GROUPS
+    return ANAMNESE_GROUPS.filter((g) => {
+      if (g.idadeMaxima == null) return true
+      if (patientAge == null || patientAge <= g.idadeMaxima) return true
+      return temResposta(g, rascunho)
+    })
+  }, [mostrarTodos, patientAge, rascunho])
+
+  const ocultos = ANAMNESE_GROUPS.length - gruposVisiveis.length
+
+  const grupoAtivo = gruposVisiveis.find((g) => g.id === grupo) ?? gruposVisiveis[0]
 
   /** Quantas respostas cada grupo já tem, para sinalizar o progresso na navegação. */
   const preenchidos = useMemo(() => {
@@ -162,6 +198,10 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
           Anamnese odontológica
         </div>
         <div className="anamnese-acoes">
+          <button className="btn btn-ghost" onClick={() => window.print()}>
+            <IconeImprimir />
+            Imprimir
+          </button>
           {bloqueado ? (
             <>
               <span className="anamnese-status">
@@ -201,16 +241,21 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
       </div>
 
       <div className="anamnese-nav">
-        {ANAMNESE_GROUPS.map((g) => (
+        {gruposVisiveis.map((g) => (
           <button
             key={g.id}
-            className={`anamnese-nav-btn ${grupo === g.id ? 'active' : ''}`}
+            className={`anamnese-nav-btn ${grupoAtivo.id === g.id ? 'active' : ''}`}
             onClick={() => setGrupo(g.id)}
           >
             {g.label}
             {preenchidos[g.id] > 0 && <span className="anamnese-count">{preenchidos[g.id]}</span>}
           </button>
         ))}
+        {ocultos > 0 && (
+          <button className="anamnese-nav-btn ghost" onClick={() => setMostrarTodos(true)}>
+            + Mostrar {ocultos === 1 ? 'a seção oculta' : `as ${ocultos} seções ocultas`}
+          </button>
+        )}
       </div>
 
       {grupoAtivo.intro && <p className="anamnese-intro">{grupoAtivo.intro}</p>}
@@ -218,8 +263,125 @@ export function AnamneseTab({ patientId }: { patientId: string }) {
       {grupoAtivo.sections.map((s) => (
         <Secao key={s.id} section={s} respostas={rascunho} onChange={alterar} bloqueado={bloqueado} />
       ))}
+
+      <ParaImpressao
+        nome={patientName}
+        idade={patientAge}
+        respostas={rascunho}
+        naoSalvas={pendentes.length}
+      />
     </div>
   )
+}
+
+/**
+ * Versão de papel. Fica fora da tela e só aparece na impressão, com um
+ * detalhe que muda tudo em relação ao formulário: imprime **apenas o que foi
+ * respondido**, e todas as seções de uma vez. Levar as quase 200 perguntas em
+ * branco para o papel daria muitas folhas em que nada se lê.
+ */
+function ParaImpressao({
+  nome,
+  idade,
+  respostas,
+  naoSalvas,
+}: {
+  nome: string
+  idade: number | null
+  respostas: Respostas
+  naoSalvas: number
+}) {
+  const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const dados = linhasDeCampos(DADOS_CLINICOS, respostas)
+  const grupos = ANAMNESE_GROUPS.map((g) => ({ grupo: g, linhas: linhasDoGrupo(g, respostas) })).filter(
+    (x) => x.linhas.length > 0
+  )
+
+  return (
+    <div className="anamnese-impressao">
+      <div className="imp-cabecalho">
+        <div className="imp-marca">Fullarch</div>
+        <h1>Anamnese odontológica</h1>
+        <p className="imp-paciente">
+          {nome}
+          {idade != null && ` · ${idade} anos`} · emitida em {hoje}
+        </p>
+        {naoSalvas > 0 && (
+          <p className="imp-aviso">
+            Documento gerado com {naoSalvas} {naoSalvas === 1 ? 'alteração ainda não salva' : 'alterações ainda não salvas'} no prontuário.
+          </p>
+        )}
+      </div>
+
+      {dados.length > 0 && (
+        <section className="imp-secao">
+          <h2>Dados clínicos</h2>
+          <dl>
+            {dados.map((l) => (
+              <div key={l.id} className="imp-linha">
+                <dt>{l.label}</dt>
+                <dd>{l.valor}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      {grupos.length === 0 ? (
+        <p className="imp-vazio">Nenhuma resposta registrada até o momento.</p>
+      ) : (
+        grupos.map(({ grupo, linhas }) => (
+          <section key={grupo.id} className="imp-secao">
+            <h2>{grupo.label}</h2>
+            <dl>
+              {linhas.map((l) => (
+                <div key={l.id} className="imp-linha">
+                  <dt>{l.label}</dt>
+                  <dd>{l.valor}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))
+      )}
+
+      <div className="imp-assinatura">
+        <div className="imp-linha-assinatura" />
+        <span>Assinatura do profissional · CRO</span>
+      </div>
+    </div>
+  )
+}
+
+type LinhaImpressa = { id: string; label: string; valor: string }
+
+function linhasDeCampos(campos: AnamneseField[], respostas: Respostas): LinhaImpressa[] {
+  const linhas: LinhaImpressa[] = []
+  for (const f of campos) {
+    const valor = respostas[f.id]
+    if (!valor) continue
+    // Checkbox guarda uma marca, não um texto: no papel ela vira "Sim".
+    linhas.push({ id: f.id, label: f.label, valor: f.type === 'check' ? 'Sim' : valor })
+  }
+  return linhas
+}
+
+function linhasDoGrupo(grupo: AnamneseGroup, respostas: Respostas): LinhaImpressa[] {
+  const linhas: LinhaImpressa[] = []
+  for (const s of grupo.sections) {
+    linhas.push(...linhasDeCampos(s.fields, respostas))
+    if (s.kind === 'periograma') {
+      for (const sx of SEXTANTES) {
+        const valor = respostas[sx.id]
+        if (valor) linhas.push({ id: sx.id, label: `${sx.label} (${sx.dentes})`, valor: `${valor} mm` })
+      }
+    }
+  }
+  return linhas
+}
+
+function temResposta(grupo: AnamneseGroup, respostas: Respostas) {
+  return linhasDoGrupo(grupo, respostas).length > 0
 }
 
 function Secao({
