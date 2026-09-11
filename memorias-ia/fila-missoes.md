@@ -114,7 +114,8 @@ Formato de cada entrada:
 
 - Criada por: Claude Code
 - Responsavel: **GitHub Copilot**
-- Status: feita localmente, **nao commitada**
+- Status: **concluida** — commitada em `9cfc2c8` e verificada em `src/App.tsx`,
+  linha 88. O registro ficou desatualizado por alguns dias.
 - Data: 2026-09-09
 - Objetivo: ligar a rota da tela de Ajustes, onde vive a gestao de equipe.
   O componente esta pronto e testado; falta apenas renderiza-lo.
