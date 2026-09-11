@@ -34,6 +34,7 @@ deve ser atualizado — e a partir dai o peso dessas questoes muda.
 - [`anamnese.md`](anamnese.md): aba de anamnese multiespecialidade no prontuario.
 - [`armazenamento-de-arquivos.md`](armazenamento-de-arquivos.md): decisao de usar Supabase Storage no lugar do Google Drive.
 - [`multi-clinica.md`](multi-clinica.md): isolamento por clinica na RLS, base do modelo de venda do software.
+- [`referencias-de-mercado.md`](referencias-de-mercado.md): produtos concorrentes olhados como referencia de posicionamento.
 - [`_modelo-memoria.md`](_modelo-memoria.md): modelo para novas memorias.
 
 ## Organizacao sugerida
