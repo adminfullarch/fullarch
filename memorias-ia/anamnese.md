@@ -56,6 +56,42 @@ O texto digitado continua subindo para o rascunho no blur, e nao a cada tecla:
 com quase 200 campos, propagar por tecla faria a aba inteira renderizar de novo
 durante a digitacao.
 
+## Pediatria escondida para adultos
+
+O grupo Pediatria deixa de ser oferecido para pacientes acima de 12 anos — o
+mesmo limite que o texto de introducao da secao ja declarava. O limite e
+**dado, nao codigo**: o campo `idadeMaxima` no grupo, em `src/data/anamnese.ts`.
+Qualquer outro grupo pode ganhar um limite da mesma forma.
+
+Tres regras evitam que isso vire perda de informacao:
+
+- Um grupo escondido que **ja tenha resposta** continua aparecendo. Se alguem
+  preencheu Pediatria e depois a idade do paciente mudou, o que foi preenchido
+  nao some da vista.
+- Paciente **sem idade cadastrada** ve todos os grupos, porque esconder por uma
+  informacao que nao existe seria um palpite.
+- A navegacao sempre mostra quantas secoes foram escondidas e oferece exibi-las.
+
+Nada e apagado do banco em nenhuma dessas situacoes.
+
+## Impressao
+
+Um botao Imprimir chama `window.print()` sobre um bloco proprio, que fica no
+DOM mas nao aparece na tela. A decisao que define esse bloco: ele imprime
+**apenas o que foi respondido**, e todas as especialidades de uma vez. Levar as
+quase 200 perguntas em branco ao papel daria varias folhas em que praticamente
+nada se le.
+
+O documento traz cabecalho com a marca, nome e idade do paciente, data de
+emissao, e linha de assinatura com CRO ao final. Se houver alteracao nao salva
+no momento da impressao, o cabecalho diz isso — o papel nao finge ser o
+prontuario gravado.
+
+No CSS, a impressao esconde o resto da pagina por `visibility`, e nao por
+`display`: mexer em `display` brigaria com a arvore que o React controla. As
+secoes usam `break-inside: avoid` para uma especialidade nao comecar no pe de
+uma folha e continuar na outra.
+
 ## Fatos confirmados
 
 - 9 especialidades: Medico, Periodontia, Endodontia, Cirurgia, DTM,
