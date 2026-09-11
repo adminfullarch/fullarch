@@ -254,3 +254,50 @@ No codigo, ja commitados e no `main`: `src/api/team.ts`,
 - A verificar tambem: `Authentication > URL Configuration` precisa ter
   `https://fullarch.vercel.app` como Site URL e nos Redirect URLs, senao o link
   do e-mail leva para o lugar errado.
+
+---
+
+## MISS-2026-09-11-010 — Corrigir ressalvas de integridade, segurança e operação
+
+- Criada por: GitHub Copilot, a pedido do usuario
+- Responsavel: GitHub Copilot na aplicacao; Claude Code no banco, Storage e
+  configuracao do Supabase
+- Status: aguardando
+- Data: 2026-09-11
+- Prioridade: alta
+- Objetivo: transformar a auditoria atual em correcoes verificaveis antes de o
+  sistema ser usado com uma base real maior, sem repetir a frente de CRM que
+  continua aguardando decisao de produto.
+- Arquivos e areas envolvidos:
+  - Aplicacao: `src/api/patients.ts`, `src/api/appointments.ts`, fluxo de
+    upload e telas relacionadas
+  - Banco e Storage: politicas de `storage.objects`, consistencia entre
+    cadastro e timeline, e garantia contra conflito de agenda
+  - Supabase: protecao contra senhas vazadas, SMTP e URL Configuration
+- Escopo da correcao:
+  1. Fazer o cadastro de paciente tratar falha ao criar o evento da timeline,
+     evitando cadastro parcialmente concluido.
+  2. Garantir no banco ou em uma operacao atomica que duas sessoes nao criem
+     consultas conflitantes; a checagem atual no cliente nao basta.
+  3. Restringir leitura, envio e exclusao de arquivos ao pertencimento da
+     clinica, mantendo o bucket privado.
+  4. Adicionar limite de tamanho e validacao de tipo no upload.
+  5. Remover ou reduzir logs de consultas que exibem dados de paciente no
+     console do navegador.
+  6. Configurar SMTP, URLs de redirecionamento e protecao contra senhas
+     vazadas no projeto Supabase; testar recuperacao de senha em producao.
+  7. Exercitar pelo navegador upload de documento, exclusao, tipo proibido,
+     convite de colega e fluxo de recuperacao de senha.
+- Fora desta missao: definir o novo proposito do CRM, implementar parcelas no
+  Financeiro ou retomar a frente de equipe/times como produto. Esses assuntos
+  permanecem pendentes separadamente.
+- Validacao esperada: build aprovado; testes de erro confirmam que falhas nao
+  deixam cadastro orfao; duas tentativas simultaneas de agenda nao geram
+  conflito; usuario de outra clinica nao acessa arquivos; upload invalido e
+  recusado; recuperacao e convite funcionam ponta a ponta; nenhum dado de
+  paciente aparece em logs de producao.
+- Resultado: ressalvas registradas; nenhuma correcao de codigo iniciada nesta
+  missao.
+- Proxima acao: Claude Code deve assumir banco, Storage e configuracao do
+  Supabase; GitHub Copilot pode assumir `src/api/patients.ts` e
+  `src/api/appointments.ts` somente quando esses arquivos estiverem parados.
