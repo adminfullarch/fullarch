@@ -2,9 +2,6 @@ import { supabase } from '../lib/supabase'
 import { addTimelineEvent } from './timeline'
 import type { Appointment, AppointmentStatus } from '../types/database.types'
 
-// eslint-disable-next-line no-console
-console.log('[appointments.ts] versão carregada: checagem de sobreposição (janela de 60min) ATIVA')
-
 
 export interface AppointmentWithPatient extends Appointment {
   patient_name: string
@@ -46,9 +43,6 @@ export async function checkAppointmentConflict(scheduledAt: string) {
   const rangeStart = new Date(target - windowMs).toISOString()
   const rangeEnd = new Date(target + windowMs).toISOString()
 
-  // eslint-disable-next-line no-console
-  console.log('[checkAppointmentConflict] pedido:', scheduledAt, '| janela:', rangeStart, '→', rangeEnd)
-
   const { data, error } = await supabase
     .from('appointments')
     .select('*, patients(name)')
@@ -57,13 +51,8 @@ export async function checkAppointmentConflict(scheduledAt: string) {
     .neq('status', 'cancelada')
     .order('scheduled_at')
     .limit(1)
-  if (error) {
-    console.error('[checkAppointmentConflict] erro na consulta:', error)
-    throw error
-  }
+  if (error) throw error
   const row = data?.[0] as any
-  // eslint-disable-next-line no-console
-  console.log('[checkAppointmentConflict] encontrou conflito?', row ? row : 'NENHUM')
   if (!row) return null
   return { ...row, patient_name: row.patients?.name ?? 'Paciente' } as AppointmentWithPatient
 }

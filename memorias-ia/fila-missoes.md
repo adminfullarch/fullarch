@@ -301,3 +301,45 @@ No codigo, ja commitados e no `main`: `src/api/team.ts`,
 - Proxima acao: Claude Code deve assumir banco, Storage e configuracao do
   Supabase; GitHub Copilot pode assumir `src/api/patients.ts` e
   `src/api/appointments.ts` somente quando esses arquivos estiverem parados.
+
+---
+
+## MISS-2026-09-11-011 — Ressalvas rapidas da auditoria MISS-010
+
+- Criada por: Claude Code, a pedido do usuario
+- Responsavel: Claude Code
+- Status: concluida (itens rapidos); o restante da MISS-010 segue aberto
+- Data: 2026-09-11
+- Verificacao da MISS-010 antes de corrigir: **dois dos sete itens ja estavam
+  feitos** e foram confirmados contra o banco, nao contra o relato.
+  - Isolamento do Storage (item 3): as tres politicas de `storage.objects`
+    filtram por `private.meus_pacientes()` e o bucket `patient-files` tem
+    `public = false`. Feito na migration `20260909192718`.
+  - Validacao de upload (item 4): `src/data/uploadRules.ts` no navegador, e no
+    bucket `file_size_limit` de 25 MB com 13 tipos MIME permitidos. SVG e HTML
+    ficam de fora de proposito.
+- Corrigido agora:
+  1. **Dados de paciente no console (item 5).** `src/api/appointments.ts`
+     imprimia a linha inteira da consulta, com o nome do paciente, no console
+     do navegador em producao, alem de dois outros logs de depuracao. Removidos.
+  2. **Cadastro pela metade (item 1).** `createPatient` inseria o evento de
+     timeline sem checar o erro. Agora, se a insercao falha, o paciente recem
+     criado e apagado e o erro sobe. Sem transacao no PostgREST as duas
+     insercoes sao independentes; desfazer e preferivel ao estado silencioso.
+- **Conflito de agenda (item 2): confirmado e NAO corrigido.** As unicas
+  restricoes em `appointments` sao a chave primaria e a estrangeira; a
+  checagem vive so no cliente, entao duas telas abertas criam consultas
+  sobrepostas. A solucao boa e uma *exclusion constraint*, e ela esbarra no
+  multi-clinica: `appointments` nao tem `clinic_id`, a clinica vem pelo
+  paciente. Impedir sobreposicao dentro de cada clinica exige desnormalizar a
+  coluna ou usar um gatilho. Fica para decisao a parte.
+- **Protecao contra senhas vazadas: adiada por decisao do usuario.** O recurso
+  exige plano Pro do Supabase, e o usuario decidiu so contratar quando comecar
+  a vender o produto. Deixa de ser pendencia aberta e passa a pre-requisito de
+  lancamento. A mitigacao gratuita equivalente e aumentar o comprimento minimo
+  de senha, hoje em 6 caracteres, em Authentication > Policies.
+- Continua com o usuario: SMTP proprio e URL Configuration, sem os quais a
+  recuperacao de senha nao funciona de verdade.
+- Continua aberto: exercitar pelo navegador upload, exclusao, tipo proibido,
+  convite de colega e recuperacao de senha (item 7 da MISS-010) — validado no
+  banco, nunca por uma pessoa.

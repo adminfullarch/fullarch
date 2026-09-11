@@ -40,12 +40,22 @@ export async function createPatient(input: NewPatientInput) {
   if (error) throw error
 
   // Espelha a regra da Missão 02: cadastro novo já nasce com um evento na timeline.
-  await supabase.from('timeline_events').insert({
+  const { error: erroTimeline } = await supabase.from('timeline_events').insert({
     patient_id: patient.id,
     title: 'Paciente cadastrado',
     description: input.reason?.trim() || 'Primeira consulta agendada.',
     kind: 'Consulta',
   })
+
+  // Sem transação no PostgREST, as duas inserções são independentes. Se a
+  // segunda falha e nada é feito, o paciente fica cadastrado sem o primeiro
+  // evento e ninguém percebe. Desfazer o cadastro é preferível a esse estado
+  // silencioso: a pessoa vê o erro e cadastra de novo, em vez de descobrir o
+  // buraco na timeline semanas depois.
+  if (erroTimeline) {
+    await supabase.from('patients').delete().eq('id', patient.id)
+    throw erroTimeline
+  }
 
   return patient as Patient
 }
