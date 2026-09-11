@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { usePatients } from './hooks/usePatients'
 import { Login } from './components/Login'
+import { RedefinirSenha } from './components/RedefinirSenha'
 import { LandingPage } from './components/LandingPage'
 import { Sidebar, ViewName } from './components/Sidebar'
 import { PatientList } from './components/PatientList'
@@ -13,13 +14,16 @@ import { CrmTab } from './components/CrmTab'
 import { FinanceTab } from './components/FinanceTab'
 
 export default function App() {
-  const { session, loading, signOut } = useAuth()
+  const { session, loading, signOut, recuperandoSenha, encerrarRecuperacao } = useAuth()
   const { patients, loading: patientsLoading, error: patientsError, reload } = usePatients(Boolean(session))
   const [view, setView] = useState<ViewName>('dashboard')
   const [activeId, setActiveId] = useState<string | null>(null)
   const [showLogin, setShowLogin] = useState(false)
 
   if (loading) return <div style={{ padding: 40 }}>Carregando…</div>
+  // Vem antes da checagem de sessao: o link do e-mail cria uma sessao valida, e
+  // sem esta linha o sistema abriria normalmente sem pedir a nova senha.
+  if (recuperandoSenha) return <RedefinirSenha onConcluido={encerrarRecuperacao} />
   if (!session) return showLogin ? <Login onBack={() => setShowLogin(false)} /> : <LandingPage onLogin={() => setShowLogin(true)} />
 
   return (

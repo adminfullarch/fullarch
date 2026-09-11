@@ -77,6 +77,9 @@
   .login-switch button{ flex:1; padding:8px 6px; border-radius:7px; color:var(--ink-soft); font-size:11px; font-weight:600; }
   .login-switch button.active{ color:var(--accent); background:var(--surface); box-shadow:0 1px 3px rgba(28,27,26,.08); }
   .login-success{ color:var(--accent); background:var(--accent-soft); border-radius:8px; padding:9px 10px; font-size:12px; line-height:1.4; margin-bottom:10px; }
+  .login-erro{ color:#9C4A3C; background:#F5E2DE; border-radius:8px; padding:9px 10px; font-size:12px; line-height:1.4; margin-bottom:10px; }
+  .login-link{ display:block; width:100%; margin-top:14px; padding:6px; background:transparent; border:0; color:var(--ink-soft); font-size:12px; text-align:center; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+  .login-link:hover{ color:var(--accent); }
   .login-card .modal-title{ text-align:left; }
   .login-card .modal-actions{ margin-top:18px; }
   .login-card .btn-solid{ width:100%; justify-content:center; min-height:42px; }
