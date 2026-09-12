@@ -263,7 +263,8 @@ No codigo, ja commitados e no `main`: `src/api/team.ts`,
 - Criada por: GitHub Copilot, a pedido do usuario
 - Responsavel: GitHub Copilot na aplicacao; Claude Code no banco, Storage e
   configuracao do Supabase
-- Status: aguardando
+- Status: **concluida.** O item 2 saiu desta missao e virou a
+  MISS-2026-09-12-013, por ser trabalho de banco e nao ressalva de auditoria
 - Data: 2026-09-11
 - Prioridade: alta
 - Objetivo: transformar a auditoria atual em correcoes verificaveis antes de o
@@ -372,9 +373,60 @@ No codigo, ja commitados e no `main`: `src/api/team.ts`,
 - Validacao esperada: cadastrar um paciente de teste, subir uma imagem e um
   documento, excluir o paciente e confirmar pelo painel do Supabase que o
   prefixo `{patientId}/` do bucket ficou vazio. `npm run build` aprovado.
+- Resultado: `deletePatientFiles` foi adicionado a `src/api/files.ts`. A rotina
+  busca os `storage_path` enquanto as linhas ainda existem, remove todos os
+  objetos em uma chamada ao bucket e aborta a exclusao do paciente se a
+  remocao falhar. `deletePatient` agora executa essa rotina antes do cascade.
+  Build e analisador de tipos aprovados.
 - **Arquivos que o Claude Code esta editando agora, nao mexer:**
   `src/components/AnamneseTab.tsx`, `src/components/PatientProfile.tsx`,
   `src/data/anamnese.ts`, `src/styles.css`.
+- Proxima acao: executar no navegador o teste com uma imagem e um documento e
+  confirmar que o prefixo do paciente desapareceu do bucket. Depois disso,
+  atualizar a missao como concluida.
 - Sugestao de trabalho paralelo, se esta missao terminar antes: revisar a
   landing page e o comportamento em tela de celular das telas novas de CRM e
   Financeiro, que nunca foram vistas em telefone.
+
+---
+
+## MISS-2026-09-12-013 — Conflito de agenda no banco
+
+- Criada por: Claude Code (saiu do item 2 da MISS-010)
+- Responsavel: Claude Code
+- Status: **concluida**
+- Data: 2026-09-12
+- Autorizada pelo usuario em 2026-09-12.
+- Problema: `checkAppointmentConflict` consultava, decidia e inseria em dois
+  passos, tudo no navegador. Duas telas abertas passavam pela consulta antes de
+  qualquer uma inserir, e as duas gravavam.
+- Por que nao um gatilho: um gatilho que refizesse a mesma consulta teria o
+  mesmo furo. Em READ COMMITTED nenhuma das transacoes enxerga a linha ainda
+  nao confirmada da outra. So a *exclusion constraint* resolve, porque o
+  proprio indice serializa as insercoes.
+- O que foi aplicado, na migration `20260912123806_conflito_de_agenda.sql`:
+  1. Extensao `btree_gist`.
+  2. Coluna `clinic_id` em `appointments`, preenchida por
+     `private.definir_clinica_da_consulta()` em gatilho BEFORE INSERT OR UPDATE
+     OF patient_id. A constraint nao atravessa tabelas, por isso a copia.
+     **A aplicacao nunca escreve nessa coluna.**
+  3. `private.janela_da_consulta(timestamptz)`, IMMUTABLE. Necessaria porque
+     somar intervalo a `timestamptz` e STABLE — o resultado pode depender do
+     fuso quando o intervalo tem dias ou meses — e indice exige IMMUTABLE. Com
+     intervalo de minutos a funcao e de fato imutavel. **Esse foi o erro
+     42P17 que derrubou a primeira tentativa.**
+  4. `appointments_sem_sobreposicao`, EXCLUDE USING gist, ignorando canceladas:
+     horario cancelado volta a ficar livre.
+- Na aplicacao: `createAppointment` traduz o codigo `23P01` numa mensagem
+  legivel. A checagem no navegador continua — e ela quem da a mensagem boa no
+  caso comum; a constraint e a rede embaixo.
+- Validacao: em transacao desfeita, insercao 30 minutos depois de uma consulta
+  existente foi recusada com 23P01, e insercao 60 minutos depois foi aceita com
+  `clinic_id` preenchido pelo gatilho. Contagem antes e depois: 3 consultas.
+  Advisors de seguranca seguem em 1, so a protecao de senha vazada.
+- Historico de migrations: o banco registrou a versao `20260912123806` e o
+  arquivo foi renomeado para bater com ela, mantendo a correspondencia
+  saneada na MISS-006.
+- Limite conhecido: a duracao de 60 minutos esta em dois lugares —
+  `APPOINTMENT_SLOT_MINUTES` em `src/api/appointments.ts` e a funcao
+  `private.janela_da_consulta`. Mudar um exige mudar o outro.

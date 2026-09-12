@@ -86,6 +86,12 @@ export interface QuestionnaireResponse {
 export interface Appointment {
   id: string
   patient_id: string
+  /**
+   * Cópia da clínica do paciente, mantida por trigger. Existe porque a
+   * constraint que impede consultas sobrepostas não atravessa tabelas.
+   * A aplicação nunca escreve nesta coluna.
+   */
+  clinic_id: string
   scheduled_at: string
   reason: string
   status: AppointmentStatus

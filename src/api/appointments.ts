@@ -67,6 +67,15 @@ export async function createAppointment(input: NewAppointmentInput) {
     })
     .select()
     .single()
+
+  // A constraint `appointments_sem_sobreposicao` é a rede embaixo de
+  // checkAppointmentConflict: ela só entra em cena quando duas telas gravam ao
+  // mesmo tempo e a checagem do navegador não tinha como enxergar a outra.
+  // Raro, mas quando acontece a mensagem crua do Postgres não diria nada a
+  // quem está marcando a consulta.
+  if (error?.code === '23P01') {
+    throw new Error('Este horário acabou de ser ocupado por outra consulta. Escolha outro.')
+  }
   if (error) throw error
 
   await addTimelineEvent({
