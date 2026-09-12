@@ -430,3 +430,58 @@ No codigo, ja commitados e no `main`: `src/api/team.ts`,
 - Limite conhecido: a duracao de 60 minutos esta em dois lugares —
   `APPOINTMENT_SLOT_MINUTES` em `src/api/appointments.ts` e a funcao
   `private.janela_da_consulta`. Mudar um exige mudar o outro.
+
+## MISS-2026-09-12-014 — Carregamento de pacientes apos o login
+
+- Criada por: GitHub Copilot, a pedido do usuario
+- Responsavel: Claude Code (assumida do Copilot)
+- Status: **corrigida; aguardando validacao no navegador**
+- Data: 2026-09-12
+- Prioridade: alta
+- Problema: logo apos entrar com uma conta, o sistema mostra **0 pacientes**
+  mesmo quando existem pacientes cadastrados. Um F5 corrige o estado porque a
+  busca e refeita depois que a sessao ja esta estabilizada.
+- Hipotese tecnica: `usePatients(Boolean(session))` inicia a consulta de forma
+  assincrona quando `session` muda, mas a interface pode renderizar a lista
+  vazia antes da resposta. O estado vazio esta sendo interpretado visualmente
+  como ausencia de pacientes, em vez de como carregamento inicial.
+- Objetivo: depois que o login concluir, disparar automaticamente a busca de
+  pacientes e manter uma indicacao explicita **Carregando pacientes...** ate a
+  resposta chegar. O sistema nao deve exibir `0` ou **Nenhum paciente
+  encontrado** durante essa primeira busca.
+- Arquivos envolvidos: `src/hooks/usePatients.ts`, `src/App.tsx`,
+  `src/components/PatientList.tsx`, `src/components/DashboardTab.tsx` e os
+  testes ou componentes de autenticacao relacionados ao retorno do login.
+- Criterios de aceite:
+  1. Entrar com uma conta que tenha pacientes exibe o estado de carregamento
+     imediatamente e mostra a lista sem exigir F5.
+  2. Enquanto a consulta estiver pendente, contadores e mensagens nao exibem
+     zero nem estado vazio definitivo.
+  3. Uma clinica realmente sem pacientes exibe **Nenhum paciente encontrado**
+     somente depois que a busca terminar.
+  4. Falha na consulta exibe erro e permite tentar novamente.
+  5. Sair e entrar com outra conta limpa o estado anterior e carrega apenas os
+     pacientes permitidos pela nova sessao.
+  6. `npm.cmd run build` aprovado.
+- **Assumida pelo Claude Code a pedido do usuario em 2026-09-12**, embora
+  registrada como do Copilot. Os arquivos estavam parados no diretorio.
+- Causa exata encontrada: nao era demora da consulta. `useEffect` so roda
+  **depois** que a tela e pintada. No render em que a sessao acaba de chegar,
+  `enabled` ja virou true mas `reload()` ainda nao marcou `loading` — entao
+  existia um render com `loading === false` e lista vazia, que a interface lia
+  como "nenhum paciente" e contador zero.
+- Correcao: `usePatients` passou a distinguir **"ainda nao perguntei"** de
+  **"perguntei e nao ha ninguem"**, com um estado `carregado`. O valor exposto
+  e derivado no proprio render, `loading || (enabled && !carregado)`, e nao
+  depende do efeito — e isso que fecha a janela. Sair da sessao zera
+  `carregado`, entao trocar de conta nao deixa a lista anterior na tela.
+- Tambem: `PatientList` mostra **Carregando pacientes...** durante a busca, e o
+  estado de erro ganhou botao **Tentar de novo**, ligado ao `reload` do App.
+  `DashboardTab` ja mostrava reticencias no lugar do numero e passou a
+  beneficiar-se do mesmo `loading`.
+- Validado por mim: `npm run build` aprovado, 107 modulos. Criterios 2 e 4
+  verificados no codigo.
+- **Falta validacao no navegador**, que eu nao tenho como fazer: criterios 1
+  (entrar e ver a lista sem F5), 3 (clinica vazia mostrando a mensagem so no
+  fim) e 5 (sair e entrar com outra conta). Nao marcar como concluida antes
+  disso — a pedido do proprio Copilot, no `copilot-status.md`.

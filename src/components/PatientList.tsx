@@ -9,6 +9,7 @@ export function PatientList({
   error,
   onSelect,
   onCreated,
+  onRetry,
 }: {
   patients: Patient[]
   activeId: string | null
@@ -16,6 +17,7 @@ export function PatientList({
   error: string | null
   onSelect: (id: string) => void
   onCreated: (id: string) => void
+  onRetry: () => void
 }) {
   const [query, setQuery] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -58,8 +60,19 @@ export function PatientList({
         </div>
       </div>
       <div className="patient-list">
-        {error && <div className="search-empty">{error}</div>}
-        {!error && filtered.length === 0 && !loading && (
+        {error && (
+          <div className="search-empty">
+            {error}
+            <br />
+            <button className="btn btn-ghost" style={{ marginTop: 10 }} onClick={onRetry}>
+              Tentar de novo
+            </button>
+          </div>
+        )}
+        {/* Antes da primeira resposta não se sabe se a clínica tem pacientes.
+            Dizer "nenhum paciente" aqui seria afirmar algo ainda não sabido. */}
+        {!error && loading && <div className="search-empty">Carregando pacientes…</div>}
+        {!error && !loading && filtered.length === 0 && (
           <div className="search-empty">Nenhum paciente encontrado.</div>
         )}
         {filtered.map((p) => (

@@ -38,6 +38,7 @@ export default function App() {
             loading={patientsLoading}
             error={patientsError}
             onSelect={setActiveId}
+            onRetry={reload}
             onCreated={(id) => {
               reload()
               setActiveId(id)
