@@ -39,12 +39,15 @@ export type AnamneseGroup = {
   label: string
   intro?: string
   /**
-   * Idade acima da qual o grupo deixa de ser oferecido. Serve para não
-   * empurrar as perguntas de odontopediatria ao dentista que atende um
-   * adulto. Não apaga nada: um grupo escondido que já tenha respostas
-   * continua aparecendo, e a aba oferece mostrar os escondidos.
+   * Faixa etária em que o grupo é oferecido. Serve para não empurrar as
+   * perguntas de odontopediatria ao dentista que atende um adulto, nem as de
+   * implante a quem atende uma criança. Não apaga nada: um grupo escondido
+   * que já tenha respostas continua aparecendo, e a aba oferece mostrar os
+   * escondidos.
    */
   idadeMaxima?: number
+  /** Idade abaixo da qual o grupo deixa de ser oferecido. */
+  idadeMinima?: number
   sections: AnamneseSection[]
 }
 
@@ -449,6 +452,9 @@ export const ANAMNESE_GROUPS: AnamneseGroup[] = [
   {
     id: 'implantes',
     label: 'Implantes',
+    // Implante em paciente com osso ainda em crescimento não se coloca, então
+    // as perguntas não cabem na consulta de uma criança.
+    idadeMinima: 18,
     intro: 'Implantodontia e reabilitação oral.',
     sections: [
       {

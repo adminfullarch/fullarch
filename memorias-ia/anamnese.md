@@ -56,12 +56,23 @@ O texto digitado continua subindo para o rascunho no blur, e nao a cada tecla:
 com quase 200 campos, propagar por tecla faria a aba inteira renderizar de novo
 durante a digitacao.
 
-## Pediatria escondida para adultos
+## Grupos por faixa etaria
 
-O grupo Pediatria deixa de ser oferecido para pacientes acima de 12 anos — o
-mesmo limite que o texto de introducao da secao ja declarava. O limite e
-**dado, nao codigo**: o campo `idadeMaxima` no grupo, em `src/data/anamnese.ts`.
-Qualquer outro grupo pode ganhar um limite da mesma forma.
+Um grupo pode declarar a faixa de idade em que faz sentido, e some fora dela.
+Hoje sao dois:
+
+- **Pediatria**, com `idadeMaxima: 12` — o mesmo limite que o texto de
+  introducao da secao ja declarava.
+- **Implantes**, com `idadeMinima: 18` — implante em paciente com osso ainda
+  em crescimento nao se coloca, entao as perguntas nao cabem na consulta de
+  uma crianca.
+
+O limite e **dado, nao codigo**: os campos `idadeMaxima` e `idadeMinima` no
+grupo, em `src/data/anamnese.ts`. Qualquer outro grupo pode ganhar faixa da
+mesma forma.
+
+Periodontia e DTM continuam aparecendo para todas as idades. Se cabem ou nao
+numa crianca e decisao clinica da dentista, e nao foi tomada.
 
 Tres regras evitam que isso vire perda de informacao:
 

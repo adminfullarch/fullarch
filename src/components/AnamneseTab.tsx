@@ -152,16 +152,20 @@ export function AnamneseTab({
   }
 
   /**
-   * Grupos oferecidos para este paciente. Um grupo com limite de idade some
-   * para quem já passou dele — mas nunca se a anamnese já tiver resposta ali,
-   * senão o dentista perderia de vista o que ele mesmo preencheu.
+   * Grupos oferecidos para este paciente. Um grupo com faixa etária some para
+   * quem está fora dela — mas nunca se a anamnese já tiver resposta ali, senão
+   * o dentista perderia de vista o que ele mesmo preencheu.
    */
   const gruposVisiveis = useMemo(() => {
     if (mostrarTodos) return ANAMNESE_GROUPS
     return ANAMNESE_GROUPS.filter((g) => {
-      if (g.idadeMaxima == null) return true
-      if (patientAge == null || patientAge <= g.idadeMaxima) return true
-      return temResposta(g, rascunho)
+      if (g.idadeMaxima == null && g.idadeMinima == null) return true
+      // Sem idade cadastrada não há como decidir, e esconder seria palpite.
+      if (patientAge == null) return true
+      const dentroDaFaixa =
+        (g.idadeMaxima == null || patientAge <= g.idadeMaxima) &&
+        (g.idadeMinima == null || patientAge >= g.idadeMinima)
+      return dentroDaFaixa || temResposta(g, rascunho)
     })
   }, [mostrarTodos, patientAge, rascunho])
 
