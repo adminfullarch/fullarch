@@ -4,5 +4,8 @@ dist
 .env.local
 *.tsbuildinfo
 
+# Memorias internas de coordenacao entre agentes; nao publicar no repositorio.
+memorias-ia/
+
 # Supabase CLI
 supabase/.temp/
