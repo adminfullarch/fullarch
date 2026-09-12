@@ -304,7 +304,18 @@ function ParaImpressao({
   return (
     <div className="anamnese-impressao">
       <div className="imp-cabecalho">
-        <div className="imp-marca">Fullarch</div>
+        <div className="imp-marca">
+          {/* O Dentinho é parte da identidade da clínica e abre o documento.
+              Tamanho contido de propósito: acolhedor na borda, sóbrio no
+              miolo — isto aqui pode ir parar na mão de um médico. */}
+          <img className="imp-mascote" src="/mascote-dentinho.png" alt="" />
+          <div>
+            <div className="imp-nome">
+              Full<span>arch</span>
+            </div>
+            <div className="imp-tagline">Gestão odontológica</div>
+          </div>
+        </div>
         <h1>Anamnese odontológica</h1>
         <p className="imp-paciente">
           {nome}
@@ -352,6 +363,11 @@ function ParaImpressao({
       <div className="imp-assinatura">
         <div className="imp-linha-assinatura" />
         <span>Assinatura do profissional · CRO</span>
+      </div>
+
+      <div className="imp-rodape">
+        <img className="imp-mascote-pe" src="/mascote-dentinho.png" alt="" />
+        <span>Documento gerado pelo Fullarch em {hoje}.</span>
       </div>
     </div>
   )

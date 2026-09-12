@@ -662,17 +662,37 @@
       font-family: var(--font-sans); font-size:11pt; line-height:1.45;
     }
 
-    .imp-cabecalho{ border-bottom:1.5pt solid #000; padding-bottom:10pt; margin-bottom:16pt; }
-    .imp-marca{ font-family: var(--font-serif); font-size:15pt; font-weight:600; letter-spacing:.02em; }
-    .imp-cabecalho h1{ font-family: var(--font-serif); font-size:17pt; font-weight:600; margin:6pt 0 4pt; }
-    .imp-paciente{ font-size:11pt; margin:0; }
-    .imp-aviso{ font-size:9.5pt; font-style:italic; margin:6pt 0 0; }
+    /* Sem isto o navegador imprime em preto e branco e a identidade se perde:
+       o verde dos titulos e o ambar da regua sumiriam. */
+    .anamnese-impressao, .anamnese-impressao *{
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    .imp-cabecalho{ border-bottom:2pt solid #C08A3E; padding-bottom:10pt; margin-bottom:18pt; }
+    .imp-marca{ display:flex; align-items:center; gap:9pt; margin-bottom:9pt; }
+    .imp-mascote{ width:17mm; height:17mm; object-fit:contain; }
+    .imp-nome{ font-family: var(--font-serif); font-size:16pt; font-weight:600; letter-spacing:.01em; color:#2F4B3C; line-height:1.1; }
+    .imp-nome span{ color:#C08A3E; }
+    .imp-tagline{ font-size:8.5pt; letter-spacing:.08em; text-transform:uppercase; color:#6B6A66; margin-top:2pt; }
+    .imp-cabecalho h1{ font-family: var(--font-serif); font-size:17pt; font-weight:600; margin:0 0 4pt; color:#1C1B1A; }
+    .imp-paciente{ font-size:11pt; margin:0; color:#3A3936; }
+    .imp-aviso{ font-size:9.5pt; font-style:italic; margin:6pt 0 0; color:#9C4A3C; }
+
+    .imp-rodape{
+      display:flex; align-items:center; gap:6pt;
+      margin-top:16pt; padding-top:7pt; border-top:.5pt solid #C8C6C0;
+      font-size:8.5pt; color:#6B6A66;
+      break-inside:avoid; page-break-inside:avoid;
+    }
+    .imp-mascote-pe{ width:8mm; height:8mm; object-fit:contain; }
 
     /* Uma especialidade nao deve comecar no pe da folha e continuar na outra. */
     .imp-secao{ margin-bottom:14pt; break-inside:avoid; page-break-inside:avoid; }
     .imp-secao h2{
       font-family: var(--font-serif); font-size:12.5pt; font-weight:600;
-      margin:0 0 6pt; padding-bottom:3pt; border-bottom:.5pt solid #999;
+      margin:0 0 6pt; padding-bottom:3pt;
+      color:#2F4B3C; border-bottom:.75pt solid #2F4B3C;
       break-after:avoid; page-break-after:avoid;
     }
     .imp-secao dl{ margin:0; }
