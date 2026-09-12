@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type { Treatment, TreatmentSession, TreatmentStatus } from '../types/database.types'
 import { addTimelineEvent } from './timeline'
+import { ehConflitoDeHorario, MENSAGEM_HORARIO_OCUPADO } from './appointments'
 
 export async function listTreatments(patientId: string) {
   const { data, error } = await supabase
@@ -84,6 +85,14 @@ export async function updateTreatmentStatus(
   status: TreatmentStatus,
   extra?: { scheduled_at?: string | null; progress_pct?: number }
 ) {
+  // Lido antes da alteração para poder desfazer se a consulta for recusada.
+  const { data: anterior, error: erroAnterior } = await supabase
+    .from('treatments')
+    .select('status, scheduled_at, progress_pct')
+    .eq('id', id)
+    .single()
+  if (erroAnterior) throw erroAnterior
+
   const { data, error } = await supabase
     .from('treatments')
     .update({ status, ...extra })
@@ -99,7 +108,20 @@ export async function updateTreatmentStatus(
       scheduled_at: extra.scheduled_at,
       reason: data.name,
     })
-    if (apptError) throw apptError
+
+    if (apptError) {
+      // O tratamento já foi gravado como agendado ali em cima. Sem desfazer,
+      // um horário recusado deixaria o tratamento marcado para uma data que
+      // não existe na Agenda — e a tela mostraria o erro por cima de uma
+      // mudança que ficou gravada.
+      await supabase
+        .from('treatments')
+        .update({ status: anterior.status, scheduled_at: anterior.scheduled_at, progress_pct: anterior.progress_pct })
+        .eq('id', id)
+
+      if (ehConflitoDeHorario(apptError)) throw new Error(MENSAGEM_HORARIO_OCUPADO)
+      throw apptError
+    }
   }
 
   const labels: Record<TreatmentStatus, string> = {

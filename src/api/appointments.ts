@@ -7,6 +7,23 @@ export interface AppointmentWithPatient extends Appointment {
   patient_name: string
 }
 
+/**
+ * `23P01` é a violação da constraint `appointments_sem_sobreposicao`. Ela é a
+ * rede embaixo de checkAppointmentConflict e só entra em cena quando duas
+ * telas gravam ao mesmo tempo.
+ *
+ * A tradução mora aqui, e não na tela, porque o erro do Supabase não é um
+ * `Error` do JavaScript: um `catch` que faça `err instanceof Error` não
+ * enxerga a mensagem e mostra o texto genérico do componente.
+ */
+const CODIGO_CONFLITO_DE_HORARIO = '23P01'
+
+export const MENSAGEM_HORARIO_OCUPADO = 'Erro: horário já ocupado na agenda.'
+
+export function ehConflitoDeHorario(error: { code?: string } | null | undefined) {
+  return error?.code === CODIGO_CONFLITO_DE_HORARIO
+}
+
 /** Lista consultas com nome do paciente já resolvido, num intervalo [startISO, endISO). */
 export async function listAppointmentsByRange(startISO: string, endISO: string) {
   const { data, error } = await supabase
@@ -68,14 +85,7 @@ export async function createAppointment(input: NewAppointmentInput) {
     .select()
     .single()
 
-  // A constraint `appointments_sem_sobreposicao` é a rede embaixo de
-  // checkAppointmentConflict: ela só entra em cena quando duas telas gravam ao
-  // mesmo tempo e a checagem do navegador não tinha como enxergar a outra.
-  // Raro, mas quando acontece a mensagem crua do Postgres não diria nada a
-  // quem está marcando a consulta.
-  if (error?.code === '23P01') {
-    throw new Error('Este horário acabou de ser ocupado por outra consulta. Escolha outro.')
-  }
+  if (ehConflitoDeHorario(error)) throw new Error(MENSAGEM_HORARIO_OCUPADO)
   if (error) throw error
 
   await addTimelineEvent({
