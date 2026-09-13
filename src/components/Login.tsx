@@ -7,6 +7,7 @@ export function Login({ onBack }: { onBack?: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [clinicName, setClinicName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -32,7 +33,7 @@ export function Login({ onBack }: { onBack?: () => void }) {
         if (password !== confirmPassword) {
           throw new Error('As senhas não conferem.')
         }
-        const { session } = await signUp(email, password)
+        const { session } = await signUp(email, password, clinicName)
         if (!session) {
           setSuccess('Usuário criado. Confira seu e-mail para confirmar o acesso.')
           setPassword('')
@@ -126,6 +127,18 @@ export function Login({ onBack }: { onBack?: () => void }) {
               minLength={6}
               required
             />
+            <label className="field-label">Nome da clínica</label>
+            <input
+              className="field-input"
+              type="text"
+              placeholder="Ex: Clínica Sorriso"
+              value={clinicName}
+              onChange={(e) => setClinicName(e.target.value)}
+              maxLength={80}
+            />
+            <p className="login-dica">
+              Foi convidado por uma clínica? Deixe em branco — você entra direto nela.
+            </p>
           </>
         )}
         {error && <p className="login-erro">{error}</p>}

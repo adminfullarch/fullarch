@@ -106,11 +106,12 @@ export function AjustesView() {
                 <div className="section-label" style={{ marginTop: 24 }}>
                   Convidar colega
                 </div>
-                <p style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-soft)', marginBottom: 12 }}>
-                  O convite libera o endereço, mas não envia e-mail. Avise a pessoa para se
-                  cadastrar em <strong>fullarch.vercel.app</strong> usando exatamente este e-mail —
-                  ela entra direto nesta clínica. O convite vale por 14 dias.
-                </p>
+                <div className="aviso-convite">
+                  <strong>O sistema não envia e-mail.</strong> Depois de convidar, avise a pessoa
+                  para se cadastrar em <strong>fullarch.vercel.app</strong> com exatamente este
+                  e-mail, deixando o nome da clínica em branco — ela entra direto aqui. O convite
+                  vale por 14 dias.
+                </div>
                 <div className="field-row" style={{ alignItems: 'flex-end' }}>
                   <div>
                     <label className="field-label">E-mail do colega</label>

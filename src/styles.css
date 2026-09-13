@@ -80,6 +80,12 @@
   .login-erro{ color:#9C4A3C; background:#F5E2DE; border-radius:8px; padding:9px 10px; font-size:12px; line-height:1.4; margin-bottom:10px; }
   .login-link{ display:block; width:100%; margin-top:14px; padding:6px; background:transparent; border:0; color:var(--ink-soft); font-size:12px; text-align:center; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
   .login-link:hover{ color:var(--accent); }
+  .login-dica{ font-size:11.5px; line-height:1.45; color:var(--ink-faint); margin:-4px 0 12px; }
+  .aviso-convite{
+    font-size:12.5px; line-height:1.55; color:#6B4E1E;
+    background: var(--amber-soft); border:1px solid #E5CFA6; border-radius:10px;
+    padding:11px 14px; margin-bottom:14px;
+  }
   .login-card .modal-title{ text-align:left; }
   .login-card .modal-actions{ margin-top:18px; }
   .login-card .btn-solid{ width:100%; justify-content:center; min-height:42px; }

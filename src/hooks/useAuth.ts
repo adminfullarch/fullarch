@@ -27,12 +27,18 @@ export function useAuth() {
     if (error) throw error
   }
 
-  async function signUp(email: string, password: string) {
+  /**
+   * `clinicName` vai em `options.data` e o gatilho de cadastro lê de
+   * `raw_user_meta_data->>'clinic_name'`. Quem entra por convite ignora o
+   * nome: entra na clínica que convidou.
+   */
+  async function signUp(email: string, password: string, clinicName?: string) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: window.location.origin,
+        data: { clinic_name: clinicName?.trim() || undefined },
       },
     })
     if (error) throw error
