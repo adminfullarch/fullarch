@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Patient } from '../types/database.types'
+import { deletePatientFiles } from './files'
 
 export async function listPatients() {
   const { data, error } = await supabase.from('patients').select('*').order('name')
@@ -14,6 +15,10 @@ export async function getPatient(id: string) {
 }
 
 export async function deletePatient(id: string) {
+  // Remova os objetos enquanto os caminhos ainda existem no banco. O delete
+  // do paciente faz cascade em files e tornaria os objetos inacessíveis.
+  await deletePatientFiles(id)
+
   const { error } = await supabase.from('patients').delete().eq('id', id)
   if (error) throw error
 }

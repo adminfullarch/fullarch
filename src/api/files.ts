@@ -19,6 +19,22 @@ export async function listPatientFiles(patientId: string, kind?: FileKind) {
   return data as PatientFile[]
 }
 
+/** Remove todos os objetos do paciente antes que o cascade apague seus metadados. */
+export async function deletePatientFiles(patientId: string) {
+  const { data, error } = await supabase
+    .from('files')
+    .select('storage_path')
+    .eq('patient_id', patientId)
+
+  if (error) throw error
+
+  const caminhos = (data ?? []).map((file) => file.storage_path).filter(Boolean)
+  if (caminhos.length === 0) return
+
+  const { error: storageError } = await supabase.storage.from(BUCKET).remove(caminhos)
+  if (storageError) throw storageError
+}
+
 /**
  * O bucket é privado, então nada é acessível por URL fixa: cada visualização
  * gera um link assinado que expira. É o que mantém documento e foto de
