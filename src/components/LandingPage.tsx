@@ -31,6 +31,30 @@ const workflow = [
   { step: '03', title: 'Cuide', text: 'Registre o atendimento e siga em frente.' },
 ]
 
+const plans = [
+  {
+    name: 'Essencial',
+    description: 'Para começar a organizar o consultorio.',
+    price: '20',
+    features: ['Prontuario dos pacientes', 'Agenda de consultas', 'Tratamentos e timeline'],
+    featured: true,
+  },
+  {
+    name: 'Profissional',
+    description: 'Para uma rotina clinica mais completa.',
+    price: '49',
+    features: ['Tudo do Essencial', 'Arquivos por paciente', 'Anamnese e odontograma'],
+    featured: false,
+  },
+  {
+    name: 'Clinica',
+    description: 'Para equipes que cuidam juntas.',
+    price: '89',
+    features: ['Tudo do Profissional', 'Equipe e convites', 'Visao financeira da clinica'],
+    featured: false,
+  },
+]
+
 export function LandingPage({ onLogin }: LandingPageProps) {
   return (
     <main className="landing-page">
@@ -129,6 +153,37 @@ export function LandingPage({ onLogin }: LandingPageProps) {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="landing-pricing" id="planos">
+        <div className="landing-pricing-heading">
+          <div>
+            <p className="landing-eyebrow">Planos para o seu consultorio</p>
+            <h2>Comece pequeno. Cresca com clareza.</h2>
+          </div>
+          <p>Uma forma simples de escolher o ritmo certo para a sua rotina.</p>
+        </div>
+        <div className="landing-plan-grid">
+          {plans.map((plan) => (
+            <article className={`landing-plan ${plan.featured ? 'featured' : ''}`} key={plan.name}>
+              {plan.featured && <span className="landing-plan-badge">Mais escolhido</span>}
+              <p className="landing-plan-name">{plan.name}</p>
+              <p className="landing-plan-description">{plan.description}</p>
+              <div className="landing-plan-price">
+                <span>R$</span>
+                <strong>{plan.price}</strong>
+                <small>/mes</small>
+              </div>
+              <ul>
+                {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
+              </ul>
+              <button className={plan.featured ? 'landing-primary' : 'landing-plan-button'} onClick={onLogin}>
+                Conhecer plano <span aria-hidden="true">↗</span>
+              </button>
+            </article>
+          ))}
+        </div>
+        <p className="landing-pricing-note">Planos apresentados visualmente. A contratação será ativada em breve.</p>
       </section>
 
       <section className="landing-closing">
