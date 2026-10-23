@@ -57,6 +57,26 @@ export async function convidar(clinicId: string, email: string, role: ClinicRole
   if (error) throw error
 }
 
+/**
+ * Só o dono passa pela RLS. O `.select().single()` no fim não é enfeite: sem
+ * ele, um update barrado pela política volta sem erro e sem linha, e a tela
+ * diria "salvo" para uma mudança que não aconteceu.
+ */
+export async function renomearClinica(clinicId: string, nome: string) {
+  const limpo = nome.trim()
+  if (limpo.length === 0) throw new Error('O nome da clínica não pode ficar em branco.')
+  if (limpo.length > 80) throw new Error('O nome da clínica pode ter no máximo 80 caracteres.')
+
+  const { data, error } = await supabase
+    .from('clinics')
+    .update({ name: limpo })
+    .eq('id', clinicId)
+    .select()
+    .single()
+  if (error) throw error
+  return data as Clinic
+}
+
 export async function revogarConvite(id: string) {
   const { error } = await supabase.from('clinic_invites').delete().eq('id', id)
   if (error) throw error

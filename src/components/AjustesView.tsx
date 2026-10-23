@@ -3,6 +3,7 @@ import {
   carregarEquipe,
   convidar,
   removerMembro,
+  renomearClinica,
   revogarConvite,
   type Equipe,
 } from '../api/team'
@@ -13,6 +14,24 @@ export function AjustesView() {
   const [erro, setErro] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [editandoNome, setEditandoNome] = useState(false)
+  const [nome, setNome] = useState('')
+  const [salvandoNome, setSalvandoNome] = useState(false)
+
+  async function handleRenomear() {
+    if (!equipe) return
+    setSalvandoNome(true)
+    setErro(null)
+    try {
+      const clinica = await renomearClinica(equipe.clinic.id, nome)
+      setEquipe({ ...equipe, clinic: clinica })
+      setEditandoNome(false)
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Não foi possível renomear a clínica.')
+    } finally {
+      setSalvandoNome(false)
+    }
+  }
 
   const recarregar = useCallback(async () => {
     setLoading(true)
@@ -72,6 +91,51 @@ export function AjustesView() {
           </div>
         ) : (
           <>
+            <div className="section-label">Clínica</div>
+            {editandoNome ? (
+              <div className="field-row" style={{ alignItems: 'flex-end', marginBottom: 24 }}>
+                <div>
+                  <label className="field-label">Nome da clínica</label>
+                  <input
+                    className="field-input"
+                    type="text"
+                    value={nome}
+                    maxLength={80}
+                    autoFocus
+                    onChange={(e) => setNome(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRenomear()
+                      if (e.key === 'Escape') setEditandoNome(false)
+                    }}
+                  />
+                </div>
+                <button className="btn btn-ghost" onClick={() => setEditandoNome(false)} disabled={salvandoNome} style={{ minHeight: 38 }}>
+                  Cancelar
+                </button>
+                <button className="btn btn-solid" onClick={handleRenomear} disabled={salvandoNome || !nome.trim()} style={{ minHeight: 38 }}>
+                  {salvandoNome ? 'Salvando…' : 'Salvar'}
+                </button>
+              </div>
+            ) : (
+              <div className="treat-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div className="treat-name">{equipe.clinic.name}</div>
+                  <div className="treat-meta">O nome que a sua equipe vê ao entrar no sistema.</div>
+                </div>
+                {equipe.souDono && (
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      setNome(equipe.clinic.name)
+                      setEditandoNome(true)
+                    }}
+                  >
+                    Renomear
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="section-label">Equipe</div>
             {equipe.membros.map((m) => (
               <div className="treat-card" key={m.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
