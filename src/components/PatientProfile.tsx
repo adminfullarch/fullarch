@@ -7,6 +7,7 @@ import { FilesTab } from './FilesTab'
 import { OdontogramaTab } from './OdontogramaTab'
 import { TreatmentsTab } from './TreatmentsTab'
 import { AnamneseTab } from './AnamneseTab'
+import { AGE_GROUP_LABEL } from '../data/anamnese'
 import { supabase } from '../lib/supabase'
 
 type Tab = 'timeline' | 'tratamentos' | 'anamnese' | 'odontograma' | 'imagens' | 'documentos'
@@ -20,7 +21,16 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'documentos', label: 'Documentos' },
 ]
 
-export function PatientProfile({ patientId, onDeleted }: { patientId: string; onDeleted: () => void }) {
+export function PatientProfile({
+  patientId,
+  onDeleted,
+  onPatientChanged,
+}: {
+  patientId: string
+  onDeleted: () => void
+  /** Avisa quem mantém a lista de pacientes que o cadastro mudou. */
+  onPatientChanged?: () => void
+}) {
   const { patient, treatments, timeline, status, loading, error, reload } = usePatientDetail(patientId)
   const [tab, setTab] = useState<Tab>('timeline')
   const [deleting, setDeleting] = useState(false)
@@ -39,6 +49,7 @@ export function PatientProfile({ patientId, onDeleted }: { patientId: string; on
             <div className="ph-name">{patient.name}</div>
             <div className="ph-sub">
               <span>{patient.age ? `${patient.age} anos` : '—'}</span>
+              <span>{patient.age_group ? AGE_GROUP_LABEL[patient.age_group] : '—'}</span>
               <span>{patient.phone ?? '—'}</span>
               <span>{patient.plan}</span>
             </div>
@@ -105,7 +116,17 @@ export function PatientProfile({ patientId, onDeleted }: { patientId: string; on
           />
         )}
         {tab === 'anamnese' && (
-          <AnamneseTab patientId={patient.id} patientName={patient.name} patientAge={patient.age} />
+          <AnamneseTab
+            patientId={patient.id}
+            patientName={patient.name}
+            patientAge={patient.age}
+            patientAgeGroup={patient.age_group}
+            onPatientChanged={async () => {
+              // A faixa aparece no perfil e na lista: os dois recarregam.
+              onPatientChanged?.()
+              await reload()
+            }}
+          />
         )}
         {tab === 'odontograma' && <OdontogramaTab patientId={patient.id} onChanged={reload} />}
         {tab === 'imagens' && (

@@ -1117,3 +1117,20 @@
     .landing-footer{ padding:24px 22px 32px; display:block; }
     .landing-footer > span:last-child{ display:block; margin-top:9px; }
   }
+
+  /* ---------- FAIXA ETARIA ---------- */
+  /* Escolha Crianca/Adulto no cadastro: reaproveita as pilulas da anamnese e
+     so ganha o espacamento que os demais campos do modal tem. */
+  .faixa-opcoes{ margin-bottom:14px; }
+  .faixa-opcoes .anamnese-opcao{ font-size:12px; padding:6px 14px; }
+
+  /* Pergunta para pacientes antigos, sem faixa gravada, no topo da anamnese. */
+  .faixa-pergunta{
+    display:flex; align-items:center; gap:8px 14px; flex-wrap:wrap;
+    font-size:12.5px; line-height:1.5; color: var(--ink);
+    background: var(--amber-soft); border:1px solid #E5CFA6; border-radius:8px;
+    padding:10px 12px; margin-bottom:14px;
+  }
+  .faixa-pergunta p{ flex:1 1 260px; margin:0; }
+  .faixa-pergunta-acoes{ display:flex; gap:6px; }
+  .faixa-pergunta-erro{ flex-basis:100%; color:#9C4A3C; font-size:12px; }

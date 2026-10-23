@@ -51,6 +51,7 @@ export default function App() {
                 setActiveId(null)
                 reload()
               }}
+              onPatientChanged={reload}
             />
           ) : (
             <div className="main">

@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import type { Patient } from '../types/database.types'
+import type { AgeGroup, Patient } from '../types/database.types'
 import { deletePatientFiles } from './files'
 
 export async function listPatients() {
@@ -26,6 +26,8 @@ export async function deletePatient(id: string) {
 export interface NewPatientInput {
   name: string
   age?: number | null
+  /** Obrigatória no cadastro: decide quais seções da anamnese aparecem. */
+  age_group: AgeGroup
   phone?: string | null
   plan?: string
   reason?: string // motivo da primeira consulta — vira o primeiro evento da timeline
@@ -37,6 +39,7 @@ export async function createPatient(input: NewPatientInput) {
     .insert({
       name: input.name,
       age: input.age ?? null,
+      age_group: input.age_group,
       phone: input.phone ?? null,
       plan: input.plan?.trim() || 'Particular',
     })
@@ -78,4 +81,10 @@ export async function updatePatientFinancial(
     .single()
   if (error) throw error
   return data as Patient
+}
+
+/** Usada para completar pacientes antigos, cadastrados antes da faixa etária existir. */
+export async function updatePatientAgeGroup(id: string, ageGroup: AgeGroup): Promise<void> {
+  const { error } = await supabase.from('patients').update({ age_group: ageGroup }).eq('id', id)
+  if (error) throw error
 }

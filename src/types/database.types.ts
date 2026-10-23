@@ -16,6 +16,8 @@ export type ConditionType = 'atencao' | 'tratado' | 'ausente'
 export type FileKind = 'image' | 'document'
 export type AppointmentStatus = 'agendada' | 'concluida' | 'cancelada'
 export type FinancialStatus = 'em_dia' | 'parcial' | 'atrasado'
+/** Faixa etária declarada no cadastro. Define quais grupos da anamnese aparecem. */
+export type AgeGroup = 'crianca' | 'adulto'
 
 export interface Patient {
   id: string
@@ -23,6 +25,8 @@ export interface Patient {
   clinic_id: string
   name: string
   age: number | null
+  /** Nulo apenas em pacientes cadastrados antes da coluna existir. */
+  age_group: AgeGroup | null
   phone: string | null
   plan: string
   financial_status: FinancialStatus

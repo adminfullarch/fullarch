@@ -7,6 +7,26 @@
  * odontograma, que grava na mesma tabela.
  */
 
+import type { AgeGroup } from '../types/database.types'
+
+export const AGE_GROUP_LABEL: Record<AgeGroup, string> = {
+  crianca: 'Criança',
+  adulto: 'Adulto',
+}
+
+/**
+ * Faixa deduzida da idade. Serve de sugestão no cadastro e de recurso para
+ * pacientes antigos, sem faixa gravada. Entre 13 e 17 anos devolve null de
+ * propósito: o adolescente pode caber em qualquer uma, e quem decide é a
+ * dentista.
+ */
+export function ageGroupFromAge(age: number | null | undefined): AgeGroup | null {
+  if (age == null || !Number.isFinite(age)) return null
+  if (age <= 12) return 'crianca'
+  if (age >= 18) return 'adulto'
+  return null
+}
+
 export type AnamneseFieldType = 'check' | 'text' | 'number' | 'date' | 'choice' | 'textarea'
 
 export type AnamneseField = {
@@ -39,15 +59,14 @@ export type AnamneseGroup = {
   label: string
   intro?: string
   /**
-   * Faixa etária em que o grupo é oferecido. Serve para não empurrar as
-   * perguntas de odontopediatria ao dentista que atende um adulto, nem as de
-   * implante a quem atende uma criança. Não apaga nada: um grupo escondido
-   * que já tenha respostas continua aparecendo, e a aba oferece mostrar os
-   * escondidos.
+   * Faixas etárias (campo `age_group` do paciente) em que o grupo é
+   * oferecido; sem este campo, o grupo aparece para todos. Serve para não
+   * empurrar as perguntas de odontopediatria ao dentista que atende um
+   * adulto, nem as de implante a quem atende uma criança. Não apaga nada: um
+   * grupo escondido que já tenha respostas continua aparecendo, e a aba
+   * oferece mostrar os escondidos.
    */
-  idadeMaxima?: number
-  /** Idade abaixo da qual o grupo deixa de ser oferecido. */
-  idadeMinima?: number
+  faixas?: AgeGroup[]
   sections: AnamneseSection[]
 }
 
@@ -454,7 +473,7 @@ export const ANAMNESE_GROUPS: AnamneseGroup[] = [
     label: 'Implantes',
     // Implante em paciente com osso ainda em crescimento não se coloca, então
     // as perguntas não cabem na consulta de uma criança.
-    idadeMinima: 18,
+    faixas: ['adulto'],
     intro: 'Implantodontia e reabilitação oral.',
     sections: [
       {
@@ -479,8 +498,8 @@ export const ANAMNESE_GROUPS: AnamneseGroup[] = [
   {
     id: 'pediatria',
     label: 'Pediatria',
-    idadeMaxima: 12,
-    intro: 'Preencher apenas para pacientes com menos de 12 anos ou em acompanhamento infantil.',
+    faixas: ['crianca'],
+    intro: 'Seção para pacientes cadastrados como Criança.',
     sections: [
       {
         id: 'ped.geral',

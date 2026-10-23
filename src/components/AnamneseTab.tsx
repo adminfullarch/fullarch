@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  AGE_GROUP_LABEL,
   ANAMNESE_GROUPS,
   DADOS_CLINICOS,
   SEXTANTES,
+  ageGroupFromAge,
   type AnamneseField,
   type AnamneseGroup,
   type AnamneseSection,
 } from '../data/anamnese'
 import { listQuestionnaireResponses, setQuestionnaireValue } from '../api/questionnaire'
+import { updatePatientAgeGroup } from '../api/patients'
+import type { AgeGroup } from '../types/database.types'
 
 const PREFIXO = 'anamnese:'
 
@@ -57,10 +61,16 @@ export function AnamneseTab({
   patientId,
   patientName,
   patientAge,
+  patientAgeGroup,
+  onPatientChanged,
 }: {
   patientId: string
   patientName: string
   patientAge: number | null
+  /** Faixa gravada no cadastro; nula em pacientes antigos. */
+  patientAgeGroup: AgeGroup | null
+  /** Recarrega o paciente depois que a faixa for definida aqui. */
+  onPatientChanged: () => void | Promise<void>
 }) {
   /** O que está gravado no banco. */
   const [salvas, setSalvas] = useState<Respostas>({})
@@ -152,6 +162,13 @@ export function AnamneseTab({
   }
 
   /**
+   * Faixa usada no filtro. A gravada no cadastro manda; paciente antigo, sem
+   * faixa, cai na dedução pela idade — que pode não decidir (sem idade, ou
+   * entre 13 e 17 anos).
+   */
+  const faixa = patientAgeGroup ?? ageGroupFromAge(patientAge)
+
+  /**
    * Grupos oferecidos para este paciente. Um grupo com faixa etária some para
    * quem está fora dela — mas nunca se a anamnese já tiver resposta ali, senão
    * o dentista perderia de vista o que ele mesmo preencheu.
@@ -159,15 +176,12 @@ export function AnamneseTab({
   const gruposVisiveis = useMemo(() => {
     if (mostrarTodos) return ANAMNESE_GROUPS
     return ANAMNESE_GROUPS.filter((g) => {
-      if (g.idadeMaxima == null && g.idadeMinima == null) return true
-      // Sem idade cadastrada não há como decidir, e esconder seria palpite.
-      if (patientAge == null) return true
-      const dentroDaFaixa =
-        (g.idadeMaxima == null || patientAge <= g.idadeMaxima) &&
-        (g.idadeMinima == null || patientAge >= g.idadeMinima)
-      return dentroDaFaixa || temResposta(g, rascunho)
+      if (!g.faixas) return true
+      // Sem faixa conhecida não há como decidir, e esconder seria palpite.
+      if (faixa == null) return true
+      return g.faixas.includes(faixa) || temResposta(g, rascunho)
     })
-  }, [mostrarTodos, patientAge, rascunho])
+  }, [mostrarTodos, faixa, rascunho])
 
   const ocultos = ANAMNESE_GROUPS.length - gruposVisiveis.length
 
@@ -238,6 +252,10 @@ export function AnamneseTab({
 
       {error && <p className="anamnese-erro">{error}</p>}
 
+      {patientAgeGroup == null && (
+        <PerguntaFaixa patientId={patientId} onDefinida={onPatientChanged} />
+      )}
+
       <div className="anamnese-dados">
         {DADOS_CLINICOS.map((f) => (
           <Campo key={f.id} field={f} value={rascunho[f.id] ?? ''} onChange={alterar} bloqueado={bloqueado} />
@@ -271,9 +289,65 @@ export function AnamneseTab({
       <ParaImpressao
         nome={patientName}
         idade={patientAge}
+        faixa={patientAgeGroup}
         respostas={rascunho}
         naoSalvas={pendentes.length}
       />
+    </div>
+  )
+}
+
+/**
+ * Paciente cadastrado antes da faixa etária existir. Em vez de deixar o filtro
+ * decidir só pela idade (que pode faltar), pergunta uma vez e grava no
+ * cadastro; a partir daí vale para sempre.
+ */
+function PerguntaFaixa({
+  patientId,
+  onDefinida,
+}: {
+  patientId: string
+  onDefinida: () => void | Promise<void>
+}) {
+  const [salvando, setSalvando] = useState<AgeGroup | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+
+  async function definir(faixa: AgeGroup) {
+    setSalvando(faixa)
+    setErro(null)
+    try {
+      await updatePatientAgeGroup(patientId, faixa)
+      await onDefinida()
+    } catch {
+      setErro('Não foi possível salvar a faixa etária. Tente de novo.')
+    } finally {
+      setSalvando(null)
+    }
+  }
+
+  return (
+    <div className="faixa-pergunta" role="group" aria-labelledby="faixa-pergunta-texto">
+      <p id="faixa-pergunta-texto">
+        Este paciente é Criança ou Adulto? A resposta define quais seções da anamnese aparecem.
+      </p>
+      <div className="faixa-pergunta-acoes">
+        {(['crianca', 'adulto'] as const).map((f) => (
+          <button
+            key={f}
+            type="button"
+            className="btn btn-ghost"
+            disabled={salvando != null}
+            onClick={() => definir(f)}
+          >
+            {salvando === f ? 'Salvando…' : AGE_GROUP_LABEL[f]}
+          </button>
+        ))}
+      </div>
+      {erro && (
+        <p className="faixa-pergunta-erro" role="alert">
+          {erro}
+        </p>
+      )}
     </div>
   )
 }
@@ -287,11 +361,13 @@ export function AnamneseTab({
 function ParaImpressao({
   nome,
   idade,
+  faixa,
   respostas,
   naoSalvas,
 }: {
   nome: string
   idade: number | null
+  faixa: AgeGroup | null
   respostas: Respostas
   naoSalvas: number
 }) {
@@ -319,7 +395,8 @@ function ParaImpressao({
         <h1>Anamnese odontológica</h1>
         <p className="imp-paciente">
           {nome}
-          {idade != null && ` · ${idade} anos`} · emitida em {hoje}
+          {idade != null && ` · ${idade} anos`}
+          {faixa != null && ` · ${AGE_GROUP_LABEL[faixa]}`} · emitida em {hoje}
         </p>
         {naoSalvas > 0 && (
           <p className="imp-aviso">
