@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { DICA_SENHA, SENHA_MINIMO, validarSenha } from '../lib/senha'
 
 export function Login({ onBack }: { onBack?: () => void }) {
   const { signIn, signUp, resetPassword } = useAuth()
@@ -27,9 +28,9 @@ export function Login({ onBack }: { onBack?: () => void }) {
           'Se existir uma conta com esse e-mail, o link para criar uma nova senha chegará em instantes. Ele vale por uma hora.'
         )
       } else if (mode === 'signup') {
-        if (password.length < 6) {
-          throw new Error('A senha precisa ter pelo menos 6 caracteres.')
-        }
+        // So no cadastro: quem tem senha antiga, mais curta, segue entrando
+        const senhaInvalida = validarSenha(password)
+        if (senhaInvalida) throw new Error(senhaInvalida)
         if (password !== confirmPassword) {
           throw new Error('As senhas não conferem.')
         }
@@ -112,8 +113,10 @@ export function Login({ onBack }: { onBack?: () => void }) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              minLength={mode === 'signup' ? SENHA_MINIMO : undefined}
               required
             />
+            {mode === 'signup' && <p className="login-dica">{DICA_SENHA}</p>}
           </>
         )}
         {mode === 'signup' && (
@@ -124,7 +127,7 @@ export function Login({ onBack }: { onBack?: () => void }) {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              minLength={6}
+              minLength={SENHA_MINIMO}
               required
             />
             <label className="field-label">Nome da clínica</label>

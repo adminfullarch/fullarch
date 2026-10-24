@@ -1,7 +1,6 @@
 import { FormEvent, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
-
-const MINIMO = 6
+import { DICA_SENHA, SENHA_MINIMO, validarSenha } from '../lib/senha'
 
 export function RedefinirSenha({ onConcluido }: { onConcluido: () => void }) {
   const { updatePassword, signOut } = useAuth()
@@ -14,8 +13,9 @@ export function RedefinirSenha({ onConcluido }: { onConcluido: () => void }) {
     e.preventDefault()
     setErro(null)
 
-    if (senha.length < MINIMO) {
-      setErro(`A senha precisa ter pelo menos ${MINIMO} caracteres.`)
+    const senhaInvalida = validarSenha(senha)
+    if (senhaInvalida) {
+      setErro(senhaInvalida)
       return
     }
     if (senha !== confirmacao) {
@@ -66,10 +66,11 @@ export function RedefinirSenha({ onConcluido }: { onConcluido: () => void }) {
           type="password"
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
-          minLength={MINIMO}
+          minLength={SENHA_MINIMO}
           autoFocus
           required
         />
+        <p className="login-dica">{DICA_SENHA}</p>
 
         <label className="field-label">Confirmar nova senha</label>
         <input
@@ -77,7 +78,7 @@ export function RedefinirSenha({ onConcluido }: { onConcluido: () => void }) {
           type="password"
           value={confirmacao}
           onChange={(e) => setConfirmacao(e.target.value)}
-          minLength={MINIMO}
+          minLength={SENHA_MINIMO}
           required
         />
 

@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { chegouPorLinkDeRecuperacao } from '../lib/authRecovery'
+import { MENSAGEM_SENHA_FRACA, ehErroDeSenhaFraca } from '../lib/senha'
+
+// A recusa por senha fraca vem em ingles; troca pela regra em portugues.
+function traduzaSenhaFraca(error: unknown): unknown {
+  return ehErroDeSenhaFraca(error) ? new Error(MENSAGEM_SENHA_FRACA) : error
+}
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null)
@@ -41,7 +47,7 @@ export function useAuth() {
         data: { clinic_name: clinicName?.trim() || undefined },
       },
     })
-    if (error) throw error
+    if (error) throw traduzaSenhaFraca(error)
     return data
   }
 
@@ -56,7 +62,7 @@ export function useAuth() {
   /** Só funciona com a sessão temporária criada pelo link do e-mail. */
   async function updatePassword(password: string) {
     const { error } = await supabase.auth.updateUser({ password })
-    if (error) throw error
+    if (error) throw traduzaSenhaFraca(error)
   }
 
   async function signOut() {
