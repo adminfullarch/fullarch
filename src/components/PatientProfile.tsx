@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePatientDetail } from '../hooks/usePatientDetail'
 import { addTimelineEvent } from '../api/timeline'
 import { deletePatient } from '../api/patients'
+import { exportarPaciente } from '../lib/exportarPaciente'
 import { financialLabel } from '../utils/patientStatus'
 import { FilesTab } from './FilesTab'
 import { OdontogramaTab } from './OdontogramaTab'
@@ -34,6 +35,9 @@ export function PatientProfile({
   const { patient, treatments, timeline, status, loading, error, reload } = usePatientDetail(patientId)
   const [tab, setTab] = useState<Tab>('timeline')
   const [deleting, setDeleting] = useState(false)
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false)
+  const [exportando, setExportando] = useState(false)
+  const [erroExport, setErroExport] = useState<string | null>(null)
 
   if (loading && !patient) return <div className="panel-body">Carregando prontuário…</div>
   if (error) return <div className="panel-body">{error}</div>
@@ -56,20 +60,29 @@ export function PatientProfile({
           </div>
           <div className="ph-actions">
             <button
+              className="btn btn-ghost"
+              title="Exportar todos os dados do paciente (LGPD)"
+              disabled={exportando}
+              onClick={async () => {
+                setErroExport(null)
+                setExportando(true)
+                try {
+                  await exportarPaciente(patient.id, patient.name)
+                } catch {
+                  setErroExport('Não foi possível exportar os dados. Tente novamente.')
+                } finally {
+                  setExportando(false)
+                }
+              }}
+            >
+              {exportando ? 'Exportando…' : 'Exportar dados (LGPD)'}
+            </button>
+            <button
               className="patient-delete-btn"
               title="Excluir paciente"
               aria-label="Excluir paciente"
               disabled={deleting}
-              onClick={async () => {
-                if (!window.confirm(`Excluir ${patient.name}? Esta ação não pode ser desfeita.`)) return
-                setDeleting(true)
-                try {
-                  await deletePatient(patient.id)
-                  onDeleted()
-                } finally {
-                  setDeleting(false)
-                }
-              }}
+              onClick={() => setConfirmandoExclusao(true)}
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
@@ -77,6 +90,7 @@ export function PatientProfile({
             </button>
           </div>
         </div>
+        {erroExport && <div className="anamnese-erro">{erroExport}</div>}
         <div className="tabs">
           {TABS.map((t) => (
             <button
@@ -137,6 +151,72 @@ export function PatientProfile({
         )}
       </div>
 
+      {confirmandoExclusao && (
+        <ConfirmarExclusaoModal
+          patientName={patient.name}
+          deleting={deleting}
+          onClose={() => {
+            if (!deleting) setConfirmandoExclusao(false)
+          }}
+          onConfirm={async () => {
+            setDeleting(true)
+            try {
+              await deletePatient(patient.id)
+              onDeleted()
+            } finally {
+              setDeleting(false)
+            }
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * Confirmacao do direito de exclusao (LGPD). Deixa claro que a acao e
+ * permanente e remove TODOS os dados e arquivos do paciente. So libera o
+ * botao depois que o usuario digita EXCLUIR.
+ */
+function ConfirmarExclusaoModal({
+  patientName,
+  deleting,
+  onClose,
+  onConfirm,
+}: {
+  patientName: string
+  deleting: boolean
+  onClose: () => void
+  onConfirm: () => Promise<void>
+}) {
+  const [texto, setTexto] = useState('')
+  const confirmado = texto.trim().toUpperCase() === 'EXCLUIR'
+  return (
+    <div className="modal-overlay visible" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-box">
+        <div className="modal-title">Excluir paciente</div>
+        <p className="field-label">
+          Esta ação é permanente e não pode ser desfeita. Serão apagados definitivamente todos os dados de{' '}
+          <strong>{patientName}</strong>: tratamentos, sessões, timeline, odontograma, anamnese, consultas e todos os
+          arquivos (imagens e documentos).
+        </p>
+        <label className="field-label">Para confirmar, digite EXCLUIR</label>
+        <input
+          className="field-input"
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          placeholder="EXCLUIR"
+          autoFocus
+        />
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={onClose} disabled={deleting}>
+            Cancelar
+          </button>
+          <button className="btn btn-solid" disabled={!confirmado || deleting} onClick={onConfirm}>
+            {deleting ? 'Excluindo…' : 'Excluir definitivamente'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

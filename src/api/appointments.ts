@@ -117,6 +117,17 @@ export async function listUpcomingAppointments(limit = 5) {
   })) as AppointmentWithPatient[]
 }
 
+/** Todas as consultas de um paciente, da mais recente para a mais antiga. Usada na exportacao LGPD. */
+export async function listAppointmentsByPatient(patientId: string) {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('scheduled_at', { ascending: false })
+  if (error) throw error
+  return data as Appointment[]
+}
+
 export async function updateAppointmentStatus(id: string, status: AppointmentStatus) {
   const { data, error } = await supabase
     .from('appointments')
